@@ -93,6 +93,14 @@
   border-bottom: 1rpx solid #F2F3F5;
 }
 
+.order-line {
+  margin-bottom: 16rpx;
+}
+
+.order-line:last-child {
+  margin-bottom: 0;
+}
+
 .order-items {
   font-size: 28rpx;
   color: #1D2129;
@@ -100,9 +108,27 @@
   margin-bottom: 8rpx;
 }
 
+.line-info {
+  display: flex;
+  /* justify-content: space-between; */
+  align-items: center;
+  gap: 10rpx;
+}
+
 .order-count {
   font-size: 24rpx;
   color: #86909C;
+  font-weight: 500;
+}
+
+.unit-price {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #165DFF;
+}
+
+.shipping-info {
+  margin-top: 30rpx;
 }
 
 .order-footer {

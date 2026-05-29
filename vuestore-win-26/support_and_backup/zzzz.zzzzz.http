@@ -1,0 +1,124 @@
+#####
+
+curl --request POST \
+  --url https://rest.yakkyofy.com/orders \
+  --header 'X-API-Key: 80da0b23-31c5-4462-a9ac-0800efbe5ef7' \
+  --header 'content-type: application/json' \
+  --data '{"externalId":"41b5fbfd-eaea-4299-9a80-e1570f46a0d9","note":"If im not home, please leave the package to the shop next door","shippingData":{"name":"Mario Rossi","address":"Via Roma 1","city":"Rome","zipcode":"00100","phone":"+390000000000","country":"Italy","countryCode":"IT","province":"Rome","provinceCode":"RM"},"items":[{"sku":"YK22010000621-0","quantity":1,"externalId":"41b5fbfd-eaea-4299-9a80-e1570f46a0d8"}],"cod":false,"pricing":{"product":10,"shipping":5,"other":0}}'
+
+
+
+#####
+
+curl --request GET \
+  --url https://rest.yakkyofy.com/orders/69bbcc26beabb2b52f0bdf0a \
+  --header 'X-API-Key: 80da0b23-31c5-4462-a9ac-0800efbe5ef7'
+
+
+#####
+
+
+
+
+
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK    0
+
+#### Admin API --> TOKEN TOKEN TOKEN ---- OK OK OK
+POST https://v02.medintl.info/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK    0
+
+### Variables
+@baseUrl = https://v02.medintl.info/admin-api
+@authToken = YOUR_AUTH_TOKEN_HERE
+
+### 1. Sync All Products
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+X-Allow-Self-Signed-Certificates: true
+
+{
+  "query": "mutation SyncAllProducts { syncAllEntitiesToCms(entityType: \"Product\") { success totalEntities successCount errorCount message errors { entityId error } } }"
+}
+
+###
+
+### 2. Sync All Variants
+POST {{baseUrl}}
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "query": "mutation SyncAllVariants { syncAllEntitiesToCms(entityType: \"ProductVariant\") { success totalEntities successCount message } }"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 变量设置
+# 注意：文档明确指出域名是 rest.yakkyofy.com
+@baseUrl=https://rest.yakkyofy.com
+@apiKey=80da0b23-31c5-4462-a9ac-0800efbe5ef7
+
+### 1. 验证 API Key (通过获取订单列表测试)
+# 即使你没有订单，这个接口如果返回 200 (空数组) 就说明 Key 正确
+# 如果返回 401，说明 Key 错了
+GET {{baseUrl}}/orders
+X-API-Key: {{apiKey}}
+Content-Type: application/json
+
+###
+
+### 2. 创建测试订单 (核心测试)
+# 请务必替换 sku 为你 Yakkyofy 后台 Import List 里的真实 SKU
+POST {{baseUrl}}/orders
+X-API-Key: {{apiKey}}
+Content-Type: application/json
+
+{
+    "externalId": "LOCAL-VENDURE-TEST-001",
+    "note": "Test order from local Vendure",
+    "shippingData": {
+        "name": "Mario Rossi",
+        "address": "Via Roma 1",
+        "city": "Rome",
+        "zipcode": "00100",
+        "phone": "+390000000000",
+        "country": "Italy",
+        "countryCode": "IT",
+        "province": "Rome",
+        "provinceCode": "RM"
+    },
+    "items": [
+        {
+            "sku": "YK22010000621-0", 
+            "quantity": 1,
+            "externalId": "LINE-ITEM-001"
+        }
+    ],
+    "cod": false,
+    "pricing": {
+        "product": 10,
+        "shipping": 5,
+        "other": 0
+    }
+}

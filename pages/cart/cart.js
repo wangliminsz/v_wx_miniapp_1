@@ -9,9 +9,16 @@ Page({
     isLogin: false,
     isLoading: true,
     syncStatus: '',
+    safeAreaTop: 0,
+    navBarHeight: 44,
   },
 
   onLoad() {
+    // Get safe area top height
+    const systemInfo = wx.getSystemInfoSync();
+    this.setData({
+      safeAreaTop: systemInfo.safeArea.top,
+    });
     this.initCart();
     this.setData({ isLogin: app.globalData.isLogin });
   },
@@ -180,11 +187,17 @@ Page({
   },
 
   updateCartDisplay(cartItems) {
+    // Calculate line totals for each item
+    const itemsWithLineTotal = cartItems.map(item => ({
+      ...item,
+      lineTotal: (parseFloat(item.price) * item.quantity).toFixed(2)
+    }));
+
     const totalPrice = this.calculateTotal(cartItems);
     const totalCount = this.calculateTotalCount(cartItems);
 
     this.setData({
-      cartItems,
+      cartItems: itemsWithLineTotal,
       totalPrice: totalPrice.toFixed(2),
       totalCount: totalCount,
     });
@@ -374,5 +387,34 @@ Page({
     wx.switchTab({
       url: '/pages/home/home',
     });
+  },
+
+  onNavBack() {
+    // First check if there's a stored previous page
+    if (app.globalData.previousPage) {
+      const previousPage = app.globalData.previousPage;
+      // Clear the stored previous page
+      app.globalData.previousPage = null;
+      // Navigate back to the previous page
+      wx.navigateTo({
+        url: `/${previousPage}`,
+        fail: () => {
+          // If navigateTo fails (e.g. it's a tabBar page), use switchTab or go home
+          wx.switchTab({
+            url: '/pages/home/home',
+          });
+        }
+      });
+    } else {
+      // Try normal navigateBack first
+      wx.navigateBack({
+        delta: 1,
+        fail: () => {
+          wx.switchTab({
+            url: '/pages/home/home',
+          });
+        }
+      });
+    }
   },
 });

@@ -5,6 +5,33 @@
   flex-direction: column;
 }
 
+/* 加载状态 */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+}
+.loading-content {
+  display: flex; flex-direction: column; align-items: center;
+}
+.loading-spinner {
+  width: 50rpx; height: 50rpx;
+  border: 3rpx solid #E5E6EB;
+  border-top-color: #165DFF;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-size: 28rpx;
+  color: #86909C;
+  margin-top: 16rpx;
+}
+
 .search-content {
   flex: 1;
   display: flex;
@@ -276,8 +303,8 @@
 }
 
 .product-price {
-  font-weight: 600;
-  font-size: 34rpx;
+  /* font-weight: 600; */
+  font-size: 32rpx;
   color: #165DFF;
 }
 

@@ -67,14 +67,17 @@
  
 
       <view class="quantity-section">
-        <text class="quantity-label">采购数量 (kg)</text>
+        <text class="quantity-label">采购数量</text>
         <view class="quantity-control">
           <view class="quantity-btn minus" bindtap="onMinus">
             <text>-</text>
           </view>
 
-          <!-- ✅ 只显示数字，不要 input ✅ -->
-          <text class="quantity-input">{{quantity}}</text>
+          <!-- ✅ 数量输入带 kg ✅ -->
+          <view class="quantity-input-wrap">
+            <input type="number" class="quantity-input" value="{{quantity}}" bindchange="onQuantityChange" />
+            <text class="quantity-unit">kg</text>
+          </view>
 
           <view class="quantity-btn plus" bindtap="onPlus">
             <text>+</text>

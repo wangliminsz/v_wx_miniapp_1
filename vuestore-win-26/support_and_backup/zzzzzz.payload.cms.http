@@ -1,0 +1,30 @@
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK  1
+
+### Login and Extract Token
+@host = http://localhost:3000
+
+#####
+
+POST http://localhost:3000/api/users/login
+Content-Type: application/json
+
+{
+  "email": "tprice@163.com",
+  "password": "tttttttt"
+}
+
+### @name loginResponse  // This names the response for variable extraction
+
+### Get User by ID (Using Extracted Token)
+# @token = {{loginResponse.response.body.token}}  // Extracts token from previous response
+# GET {{host}}/api/users/1?depth=2&draft=false&locale=undefined&trash=false
+# Authorization: JWT {{token}}
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK  1
+
+GET http://localhost:3000/api/users/1?depth=2&draft=false&locale=undefined&trash=false
+
+
+#####
+
+

@@ -1,6 +1,9 @@
 <view class="page-container">
   <!-- 页面标题 -->
-  <view class="page-title">注册/更新信息</view>
+  <!-- <view class="page-title">注册/更新信息</view> -->
+  <view class="page-title">
+  {{isLogin ? '更新信息' : '用户注册'}}
+</view>
 
   <!-- 信息填写卡片 -->
   <view class="form-card">

@@ -132,7 +132,7 @@ Page({
           wx.hideLoading();
           wx.showModal({
             title: '更新失败',
-            content: updateRes.message || '更新资料失败',
+            content: updateRes.message || '更新信息失败',
             showCancel: false
           });
           return;

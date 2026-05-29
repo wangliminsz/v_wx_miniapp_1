@@ -1,0 +1,1335 @@
+@admin_token=a685b634a6539e5463648dfdc6d021fd48416cfe94dec0e96e7c78b9d9ea55bc
+
+### Update inventory settings for a product variant ---> OK OK OK 更新后台库存状态
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "query": "mutation { updateProductVariant(input: { id: \"1\" trackInventory: TRUE outOfStockThreshold: 50 useGlobalOutOfStockThreshold: false }) { id outOfStockThreshold useGlobalOutOfStockThreshold trackInventory } }"
+}
+
+
+
+### Get inventory settings for a product variant  ---> OK OK OK 查询后台库存状态
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "query": "query { productVariant(id: \"2\") { id name trackInventory stockOnHand outOfStockThreshold useGlobalOutOfStockThreshold } }"
+}
+
+###
+
+### Query product variants with inStock flag
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { product(id: $id) { id name variants { id name stockLevel } } }",
+  "variables": {
+    "id": "1"
+  }
+}
+
+
+
+###
+
+
+
+
+
+
+
+
+
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+
+### shop-api TOKEN TOKEN TOKEN ----------- OK OK OK --> from Header could get the token
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+
+#### Admin API --> TOKEN TOKEN TOKEN ---- OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+
+
+
+### Get all collections with slug and id
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { collections { items { id slug name } totalItems } }"
+}
+
+
+###################
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 5, comment: \"sss test user vue\", title: \"sss TEST user\", verifiedPurchase: false, username: \"John Doe\", useremail: \"johndoe@163.com\") { id rating title comment username useremail verifiedPurchase helpful notHelpful } }"
+}
+
+
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 5, comment: \"sss test user vue\", title: \"sss TEST user\", verifiedPurchase: false) { id rating title comment  verifiedPurchase helpful notHelpful } }"
+}
+
+
+
+
+
+
+
+
+
+
+
+### add Review ---> OK OK OK  ### add Review ---> OK OK OK  ### add Review ---> OK OK OK 
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 2, comment: \"bbb Excellent quality\", title: \"bbb Great value\", verifiedPurchase: true) { id rating title comment createdByIp verifiedPurchase helpful notHelpful } }"
+}
+
+
+### add Review ---> OK OK OK  ### add Review ---> OK OK OK  ### add Review ---> OK OK OK 
+
+
+### helpful ---------------------------------------OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { markReviewHelpful(id: \"17\") }"
+}
+
+### helpful ---------------------------------------OK OK OK
+
+### Mark review not helpful
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { markReviewNotHelpful(id: \"17\") }"
+}
+
+### helpful ---------------------------------------OK OK OK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###
+
+
+### 🛒 Shop API: Add review (guest)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation {addReview(productId: \"38\", rating: 5, comment: \"ver 2 --> Excellent quality\", title: \"Great value\") { id rating title comment createdByIp verifiedPurchase helpful notHelpful customer { id firstName }}}"
+}
+
+
+#################
+
+### 1. Guest adds a review (no Authorization header)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 4, comment: \"Guest review\") { id rating comment createdAt customer { id firstName } } }"
+}
+
+
+
+### 2. Logged-in customer adds a review (use sessionToken from step 2)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 0addb670f2f1de8fd58810f62291a04a036a82a78b117b517468f621031e2d9a
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 5, comment: \"Customer review with auth\") { id rating comment createdAt customer { id firstName } } }"
+}
+
+### 3. Query reviews by product
+### Paginated reviews with totalCount
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { reviewsByProduct(productId: \"38\", skip: 0, take: 12) { items { id rating comment createdAt customer { id firstName } } totalCount } }"
+}
+
+
+### admin 删除评论 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#### Admin API --> OK OK OK ~~~~~~~~~~~~~~~ TOKEN
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+### Admin deletes a review (replace <adminSessionToken> and review ID) OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer ea32c99b538679a36ab3b13f8ce5c3db41839ce8663137dd29be6600a60971da
+
+{
+  "query": "mutation { deleteReview(id: \"4\") }"
+}
+
+### Admin queries reviews with pagination
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer ea32c99b538679a36ab3b13f8ce5c3db41839ce8663137dd29be6600a60971da
+
+{
+  "query": "query { reviewsByProduct(productId: \"38\", skip: 0, take: 5) { items { id rating comment createdAt customer { id firstName } } totalCount } }"
+}
+
+
+
+### admin 删除评论 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 4, comment: \"Guest review\") { id comment customer } }"
+}
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+vendure-auth-token: YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 5, comment: \"Logged-in review with my name!\") { id comment customer { firstName } } }"
+}
+
+
+### Get fresh token OK OK OK --> from Header could get the token
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+vendure-auth-token: 28154bc767a480f503b706724be9402c87dbb7fda2d92dbc1d4e82a6fa86f685
+
+{
+  "query": "mutation { addReview(productId: \"38\", rating: 5, comment: \"Limin's review with customer info\") { id rating comment createdAt customer { id firstName lastName emailAddress } } }"
+}
+
+### Get reviews for a product OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query GetReviews($productId: ID!) { reviewsByProduct(productId: $productId) { id rating comment createdAt customer { firstName } } }",
+  "variables": {
+    "productId": "38"
+  }
+}
+
+###
+# modify addReview so it automatically links the logged‑in customer (instead of passing customerId manually)? That way reviews are always tied to the correct user session.
+
+# Best Practice Refinements
+# Authentication: If you want reviews tied to logged‑in customers, remove customerId from the mutation and instead resolve the customer from the ctx.activeUserId.
+
+# Pagination: Add skip and take args to reviewsByProduct for scalability.
+
+# Moderation: Add an Admin API mutation like deleteReview(id: ID!) for moderation.
+
+
+
+
+
+
+
+
+### Add Review to product ID 38  OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation AddReview($productId: ID!, $rating: Int!, $comment: String!) { addReview(productId: $productId, rating: $rating, comment: $comment) { id rating comment createdAt product { id name slug } customer { id firstName } } }",
+  "variables": {
+    "productId": "38",
+    "rating": 5,
+    "comment": "again --> Great product overall!"
+  }
+}
+
+# vendure=# 
+
+# CREATE TABLE review (
+#   id SERIAL PRIMARY KEY,
+#   rating INT NOT NULL,
+#   comment TEXT NOT NULL,
+#   productId INT NOT NULL REFERENCES product(id) ON DELETE CASCADE,
+#   customerId INT REFERENCES customer(id) ON DELETE SET NULL,
+#   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+# );
+
+# CREATE TABLE
+
+# vendure=# 
+
+# CREATE INDEX idx_review_product_id ON review(productId);
+
+# CREATE INDEX
+
+
+### Get product IDs --> OK OK OK aloe is 38, laptop is 1
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query Products($term: String!) { products(options: { filter: { name: { contains: $term } } }) { items { id name slug } } }",
+  "variables": {
+    "term": "aloe"
+  }
+}
+
+
+################ Search product -->  OK OK OK
+### description 
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { searchProductsWithOptions(term: \"GB\", page:1, pageSize: 12) { totalCount items { productName  productAsset {id preview} slug variantCount minPriceWithTax maxPriceWithTax} } }"
+}
+
+
+################ OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { searchProductsWithOptions(term: \"apple\") { totalCount items { productName variants { variantName options { name } variantFacets { name } } } } }"
+}
+
+
+###
+
+ slug description productAsset {id preview}
+
+### Page 2 test
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { searchProductsWithOptions(term: \"oe\", page:1, pageSize: 12) { totalCount items { productName  productAsset {id preview} slug description variantCount minPriceWithTax maxPriceWithTax} } }"
+}
+
+### Search products with options + pagination + totalCount
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "
+    query SearchProducts($term: String!, $page: Int, $pageSize: Int) {
+      searchProductsWithOptions(term: $term, page: $page, pageSize: $pageSize) {
+        totalCount
+        items {
+          productId
+          productName
+          slug
+          description
+          productAsset {
+            id
+            preview
+          }
+          productFacets {
+            id
+            name
+            code
+          }
+          variantCount
+          minPrice
+          maxPrice
+          minPriceWithTax
+          maxPriceWithTax
+          variants {
+            variantId
+            variantName
+            price
+            priceWithTax
+            options {
+              id
+              name
+            }
+            variantFacets {
+              id
+              name
+              code
+            }
+          }
+        }
+      }
+    }
+  ",
+  "variables": {
+    "term": "laptop",
+    "page": 1,
+    "pageSize": 10
+  }
+}
+
+### Test with different term (e.g. color, option, facet)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { searchProductsWithOptions(term: \"red\", page: 1, pageSize: 5) { totalCount items { productName variants { variantName options { name } variantFacets { name } } } } }"
+}
+
+### Test page 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { searchProductsWithOptions(term: \"phone\", page: 2, pageSize: 8) { totalCount items { productName variantCount minPrice maxPrice } } }"
+}
+
+### Search products with options
+    # "page": 1,
+    # "pageSize": 10
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProducts($term: String!, $page: Int!, $pageSize: Int!) { searchProductsWithOptions(term: $term, page: $page, pageSize: $pageSize) { totalCount items { productId productName slug description productAsset { id preview } productFacets { id name code } variants { variantId variantName price priceWithTax options { id name } variantFacets { id name code } } variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax } } }",
+  "variables": {
+    "term": "laptop",
+  }
+}
+
+
+
+### Search products with options, including slug, description, and productAsset
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query($term: String!, $skip: Int, $take: Int) { searchProductsWithOptions(term: $term, skip: $skip, take: $take) { productId productName slug description productAsset { id preview } productFacets { id name code } variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax variants { variantId variantName variantFacets { id name code } options { id name } price priceWithTax } } }",
+  "variables": {
+    "term": "a",
+    "skip": 0,
+    "take": 10
+  }
+}
+
+
+###
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query($term: String!, $skip: Int, $take: Int) { searchProductsWithOptions(term: $term, skip: $skip, take: $take) { productId productName productFacets { id name code } variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax variants { variantId variantName variantFacets { id name code } options { id name } price priceWithTax } } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 20
+  }
+}
+
+
+
+
+
+
+
+
+### Collection Product Summary with Facet Groups
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName facetValues { id name code facet { id name code facetGroup { id name code } } } } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+
+
+
+
+###
+
+
+
+
+
+
+
+### Collection Product Summary Query  -- OK OK OK but with no facet groups
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName slug description featuredAsset { id preview } variantCount minPriceWithTax maxPriceWithTax facetValues { id name code } } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+
+
+
+### collectionProductSummary --> Postgresql OK OK OK --- but lack image/slug/desc
+POST http://192.168.0.53:3000/shop-api 
+Content-Type: application/json 
+
+{ "query": "query ($collectionId: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax facetValues { id name code } } }", 
+"variables": { "collectionId": "2" } 
+}
+
+### Product LEVEL --> Search products with options and facets
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query($term: String!) { searchProductsWithOptions(term: $term) { productId productName productFacets variants { variantId variantName variantFacets options } } }",
+  "variables": {
+    "term": "16GB"
+  }
+}
+
+
+
+
+
+
+### BetterSearch query
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query Search { betterSearch(input: { term: \"computers\" }) { totalItems items { productId slug productName productAsset { id preview } lowestPrice lowestPriceWithTax highestPrice highestPriceWithTax facetValueIds collectionIds collectionNames } } }"
+}
+
+
+
+
+
+
+### Vendure 修改 Option OK OK OK
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5ccd12daca2d62fd50c3e25084d7398378578da0bee63eba9eac82b1dd3692fa
+
+{
+  "query": "mutation { updateProductOption(input: { id: \"49\", code: \"64-gb\", translations: [{ languageCode: en, name: \"64GB\" }] }) { id code translations { languageCode name } } }"
+}
+
+
+###
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { productsByFacets(collectionId: \"10\", facetValueIds: [\"24\", \"25\", \"27\"], skip: 0, take: 5) { totalCount items { id name } } }"
+}
+
+#####
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { productsByFacets(collectionId: \"10\", facetValueIds: [\"24\", \"25\", \"27\"]) { id name } }"
+}
+
+
+
+### Fetch all option groups and facets  ---> OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { allOptionGroups { id code name options { id code name } } allFacets { id code name values { id code name } } }"
+}
+
+
+####
+
+############ OK OK OK 11-17 Product Summary
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax facetValues { id name code } } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query($facetValueIds:[ID!],$skip:Int!,$take:Int!){ searchWithOptions(input:{facetValueIds:$facetValueIds,skip:$skip,take:$take}){ items{ productName productVariantName facetValueIds variantOptions{ id name } } totalItems } }",
+  "variables": {
+    "facetValueIds": ["40"],
+    "skip": 0,
+    "take": 10
+  }
+}
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query($facetValueIds:[ID!],$skip:Int!,$take:Int!){ searchWithOptions(input:{facetValueIds:$facetValueIds,skip:$skip,take:$take}){ items{ productName productVariantName facetValueIds variantOptions{ id name } } totalItems } }",
+  "variables": {
+    "facetValueIds": ["40", "3", "4", "5", "6", "7", "8", "10", "11", "12", "13", "14", "15", "16", "19", "20", "21", "22", "24", "29"],
+    "skip": 0,
+    "take": 100
+  }
+}
+
+
+###
+
+"facetValueIds": [
+  "3", "4", "5", "6", "7", "8", "10", "11", "12", "13",
+  "14", "15", "16", "19", "20", "21", "22", "24", "29", "40"
+]
+
+
+####
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { collections(options: { skip: 0, take: 100 }) { items { id name } totalItems } }"
+}
+
+
+### Available product-level facets for collection 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { availableProductFacets(collectionId: $collectionId) { id name code values { id name code } } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+
+### Inspect facet values on variants in collection 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { collection(id: $id) { id name productVariants { items { id name facetValues { id name code facet { id name code } } } } } }",
+  "variables": {
+    "id": "2"
+  }
+}
+
+
+### Available facets for collection 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { availableFacets(collectionId: $collectionId) { id name code values { id name code } } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+
+
+### Inspect variants in collection 2
+### OK OK OK TAX TAX TAX 1   ---- Product Variant Level
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { collection(id: $id) { id name productVariants { items { id name price priceWithTax } totalItems } } }",
+  "variables": {
+    "id": "2"
+  }
+}
+
+### OK OK OK TAX TAX TAX 1
+
+###
+
+### Product-level summary with tax-inclusive values
+
+### OK OK OK With TAX ---- Product Level
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax } }",
+  "variables": {
+    "collectionId": "2"
+  }
+}
+
+###
+### OK OK OK With TAX ---- Product Level
+
+###
+
+
+### Compare product-level summary vs variant-level prices
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!, $id: ID!) { collectionProductSummary(collectionId: $collectionId, skip: 0, take: 20) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax } collection(id: $id) { id name productVariants { items { id name price priceWithTax } totalItems } } }",
+  "variables": {
+    "collectionId": "2",
+    "id": "2"
+  }
+}
+
+
+
+### Product-level summary without tax
+### Product-level summary with tax-inclusive values
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!, $skip: Int, $take: Int) { collectionProductSummary(collectionId: $collectionId, skip: $skip, take: $take) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax } }",
+  "variables": {
+    "collectionId": "2",
+    "skip": 0,
+    "take": 20
+  }
+}
+
+
+
+### Inspect variants in collection 2 with raw and tax-inclusive prices
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { collection(id: $id) { id name productVariants { items { id name price priceWithTax } totalItems } } }",
+  "variables": {
+    "id": "2"
+  }
+}
+
+
+
+### Inspect variants in collection 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { collection(id: $id) { id name productVariants { id name price priceWithTax } } }",
+  "variables": {
+    "id": "2"
+  }
+}
+
+
+### Test collection product summary
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!, $skip: Int, $take: Int) { collectionProductSummary(collectionId: $collectionId, skip: $skip, take: $take) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax } }",
+  "variables": {
+    "collectionId": "2",
+    "skip": 0,
+    "take": 20
+  }
+}
+
+
+### Get variants in collection 2
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($id: ID!) { collection(id: $id) { id name productVariants { id name price priceWithTax } } }",
+  "variables": {
+    "id": "2"
+  }
+}
+
+
+### Get all collections
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { collections { items { id name } } }"
+}
+
+
+### Collection Product Summary
+### Get product summaries for a collection
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query ($collectionId: ID!, $skip: Int, $take: Int) { collectionProductSummary(collectionId: $collectionId, skip: $skip, take: $take) { productId productName variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax} }",
+  "variables": {
+    "collectionId": "2",
+    "skip": 0,
+    "take": 20
+  }
+}
+
+
+###
+
+###     "term": "Laptop",     "optionIds": ["1"],
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($term:String,$facetValueIds:[ID!],$optionIds:[ID!],$skip:Int!,$take:Int!){ searchWithOptions(input:{term:$term,facetValueIds:$facetValueIds,optionIds:$optionIds,skip:$skip,take:$take}){ items{ productId productName productVariantName facetValueIds variantOptions{ id name } } totalItems totalProducts } }",
+  "variables": {
+    "optionIds": ["1"],
+    "skip": 0,
+    "take": 10
+  }
+}
+
+
+### 测试 SearchWithOptions 返回 totalItems 和 totalProducts
+// Huawei 品牌 (Now Huawei is Laptop product level's facet - brand value)
+// (13 OR 15 inch) AND 16GB
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems totalProducts } }",
+  "variables": {
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["40"],      
+    "optionIds": ["1","2","4"]    
+  }
+}
+
+
+
+### Test Huawei + (13 OR 15 inch) AND 16GB      "facetValueIds": ["40"],      "optionIds": ["1","2","4"],  
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds:[ID!],$optionIds:[ID!],$skip:Int!,$take:Int!){ searchWithOptions(input:{facetValueIds:$facetValueIds,optionIds:$optionIds,skip:$skip,take:$take}){ items{ productId productName productVariantName facetValueIds variantOptions{ id name } } totalItems } }",
+  "variables": {   
+    "optionIds": ["1"],  
+    "skip": 0,
+    "take": 10
+  }
+}
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems totalProducts } }",
+  "variables": {
+    "skip": 0,
+    "take": 10
+  }
+}
+
+
+
+### OK OKOKOK OK
+### 测试 Huawei 品牌 + 17 inch 屏幕 + 64GB 内存
+    # "facetValueIds": ["40"],
+    # "optionIds": ["1","2","4"]
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "skip": 0,
+    "take": 10
+  }
+}
+
+
+
+### 测试 Huawei 品牌 + 15 inch 屏幕
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["40"],  
+    "optionIds": ["48"]
+  }
+}
+
+
+### 测试 Electronics 分类 + 15 inch 屏幕
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["1"],  
+    "optionIds": ["2"]
+  }
+}
+
+###
+
+
+### 测试 Huawei 品牌 + 选项组合     "facetValueIds": ["5"],
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: \"\", skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["1"],
+    "optionIds": ["2"]
+  }
+}
+
+
+### 测试 searchWithOptions 查询
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($term: String!, $facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: $term, skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["40"],
+    "optionIds": ["4"]
+  }
+}
+
+
+
+
+### 测试 searchWithOptions 查询
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($term: String!, $facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: $term, skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["1","2"],
+    "optionIds": ["4"]
+  }
+}
+
+
+
+
+### 测试 searchWithOptions 查询     "optionIds": ["1"]
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($term: String!, $facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { searchWithOptions(input: { term: $term, skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 10,
+    "facetValueIds": ["1","2"],
+    "optionIds": ["1","4"]
+  }
+}
+
+
+### Search Laptop with Facets + Options
+### "facetValueIds": ["1","2"],   // category: electronics + computers
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithOptions($term: String!, $facetValueIds: [ID!], $optionIds: [ID!], $skip: Int!, $take: Int!) { search(input: { term: $term, skip: $skip, take: $take, facetValueIds: $facetValueIds, optionIds: $optionIds }) { items { productId productName productVariantName facetValueIds variantOptions { id name } } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 12,
+    "optionIds": ["1","4"]
+  }
+}
+
+
+
+
+#### "facetValueIds": ["40"],
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProducts($term: String!, $facetValueIds: [ID!], $skip: Int!, $take: Int!) { search(input: { term: $term, skip: $skip, take: $take, facetValueIds: $facetValueIds }) { items { productId productName slug description facetValueIds } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 12,
+    "optionIds": ["1","4"]  
+  }
+}
+
+
+
+
+###
+
+curl http://192.168.0.53:3000/shop-api \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ __type(name:\"FacetValueFilterInput\") { name fields { name type { name kind } } } }"}'
+
+
+
+
+### Search products with facetValueFilters
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query SearchProductsWithFilters($term: String!, $facetValueFilters: [FacetValueFilterInput!], $skip: Int!, $take: Int!) { search(input: { term: $term, skip: $skip, take: $take, facetValueFilters: $facetValueFilters }) { items { productId productName slug description facetValueIds } totalItems } }",
+  "variables": {
+    "term": "Laptop",
+    "skip": 0,
+    "take": 12,
+    "facetValueFilters": [
+      { "facetValueId": "1", "and": true }
+    ]
+  }
+}
+
+
+###
+
+
+###
+### Fetch available facets for a given collection
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { availableFacets(collectionId: \"6\") { id name values { id name } } }"
+}
+
+
+### Fetch available facets for a given collection
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { availableFacets(collectionId: \"10\") { id name values { id name } } }"
+}
+
+###
+
+### Fetch all collections with IDs and names
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { collections { items { id name slug } totalItems } }"
+}
+
+
+###
+
+
+
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "query { collections { items { id name productVariants { totalItems } productCount } } }"
+}
+
+
+###
+
+
+
+###
+
+### Login and capture token
+
+### Login and capture token
+# @name login
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation { login(username: \"superadmin\", password: \"superadmin\") { ... on CurrentUser { id identifier } ... on InvalidCredentialsError { errorCode message } } }"
+}
+
+
+###
+
+### express that GraphQL mutation in VS Code REST Client format (the .http file syntax)
+### Login mutation
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation { login(username: \"superadmin\", password: \"superadmin\") { ... on CurrentUser { id identifier } ... on InvalidCredentialsError { errorCode message } } }"
+}
+
+
+###
+
+mutation {
+  login(username: "superadmin", password: "superadmin") {
+    ... on CurrentUser {
+      id
+      identifier
+    }
+    ... on InvalidCredentialsError {
+      errorCode
+      message
+    }
+  }
+}
+
+###
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5ccd12daca2d62fd50c3e25084d7398378578da0bee63eba9eac82b1dd3692fa
+
+{
+  "query": "mutation { updateProductOption(input: { id: \"49\", code: \"64-gb\", translations: [{ languageCode: en, name: \"64GB\" }] }) { id code translations { languageCode name } } }"
+}
+
+
+###
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5ccd12daca2d62fd50c3e25084d7398378578da0bee63eba9eac82b1dd3692fa
+
+{
+  "query": "{ me { id identifier } }"
+}
+
+
+
+
+###
+
+GET https://server.smithery.ai/@HarunGuclu/bible-mcp/mcp?api_key=5e885fcb-3519-4176-b9a6-6ce1e31f8372&profile=occupational-toad-PuHlMw
+Content-Type: application/json
+Accept: text/event-stream
+Authorization: Bearer 
+
+###
+
+###
+
+https://server.smithery.ai/@HarunGuclu/bible-mcp/mcp?api_key=5e885fcb-3519-4176-b9a6-6ce1e31f8372&profile=occupational-toad-PuHlMw
+Accept: text/event-stream
+
+###
+
+GET https://dashscope.aliyuncs.com/api/v1/mcps/quanmiao-hotnews/sse
+Authorization: Bearer sk-b41caad57afb4360881e02a526f2db51
+
+
+###
+Content-Type: application/json
+Authorization: Bearer sk-b41caad57afb4360881e02a526f2db51
+
+
+### Send test invite
+POST https://n8n.favor100.site/webhook-test/invite-user
+###
+
+https://n8n.favor100.site/webhook/f9b0be84-8781-4ce4-8415-fe0e30d50c1a
+Content-Type: application/json
+
+{
+  "email": "someone@example.com"
+}
+
+###
+https://n8n.favor100.site/webhook-test/f9b0be84-8781-4ce4-8415-fe0e30d50c1a
+Content-Type: application/json
+
+{
+  "email": "someone@example.com"
+}
+
+
+
+### ok OK
+GET https://n8n.favor100.site/api/v1/users
+Content-Type: application/json
+X-N8N-API-KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZDg2MDc0Yi02ZDAxLTQ2MTAtOTc5OS1iYzVkNmY4ZjNiYzMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYyMjUwODE1fQ.gSUBEivk-ZO_shnGmUokvGXUnb_vhDqnXyGrp--48FM
+
+### oK OK
+
+POST https://n8n.favor100.site/api/v1/users
+Content-Type: application/json
+X-N8N-API-KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZDg2MDc0Yi02ZDAxLTQ2MTAtOTc5OS1iYzVkNmY4ZjNiYzMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYyMjUwODE1fQ.gSUBEivk-ZO_shnGmUokvGXUnb_vhDqnXyGrp--48FM
+
+[
+  {
+  "email": "mark@miracleark.com.cn",
+  "role": "global:member"
+ }
+]
+
+
+
+###
+
+
+https://n8n.favor100.site/webhook/invite-user
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "{ products(options: { take: 2 }) { items { id name slug description } } }"
+}
+
+###
+
+
+###
+
+
+POST https://readonlydemo.vendure.io/shop-api
+Content-Type: application/json
+
+{
+  "query": "{ products(options: { take: 2 }) { items { id name slug description } } }"
+}
+
+
+###
+
+Get https://bkkapi.favor100.site
+
+###

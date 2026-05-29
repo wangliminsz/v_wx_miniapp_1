@@ -1,0 +1,129 @@
+
+POST http://localhost:3000/api/users/login
+Content-Type: application/json
+
+{
+  "email": "tprice@163.com",
+  "password": "tttttttt"
+}
+
+
+
+
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK  1
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK  1
+
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK 0
+@host=http://192.168.0.53:3000
+
+#### Admin API --> TOKEN TOKEN TOKEN ---- OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK 0
+
+
+
+
+
+
+
+
+
+### Get all collections
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 20b9845dc99d3ec333f0e198c0fe84faa06ea393ff6637f48604f903b98b9e44
+vendure-token: k9m2p7r4a1q8y5z3w6v1
+
+{
+  "query": "query GetCollections { collections { items { id name slug parent { name } featuredAsset { id preview } children { id name slug featuredAsset { id preview } } productVariants { totalItems } productCount } } }"
+}
+
+
+######
+
+
+
+
+
+
+
+
+### 1. Query all existing option-groups + their options  查询所有 Options / Value ~~~~~~~ OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5adfc212fa32fcfb1f2296a1afb9021adf209e94a47db382d999a63bb04b0369
+
+{
+    "query":"query AllOptionGroups { productOptionGroups { id code name options { id code name } } }"
+}
+
+### 1. Query all existing option-groups + their options  查询所有 Options / Value ~~~~~~~ OK OK OK
+
+###
+
+### 2. Create a new ProductOptionGroup with nested options 创建 Options / Value ~~~~~~~ OK OK OK OK
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5adfc212fa32fcfb1f2296a1afb9021adf209e94a47db382d999a63bb04b0369
+
+{ "query":"mutation CreateGroup($input: CreateProductOptionGroupInput!){ createProductOptionGroup(input:$input){ id code translations { languageCode name } options { id code translations { languageCode name } } } }", "variables":{ "input":{ "code":"laptop-hd-disk", "translations":[{ "languageCode":"en", "name":"Laptop HD Disk"}], "options":[ { "code":"512gb", "translations":[{ "languageCode":"en", "name":"512GB"}] }, { "code":"1tb", "translations":[{ "languageCode":"en", "name":"1TB"}] }, { "code":"2tb", "translations":[{ "languageCode":"en", "name":"2TB"}] } ] } } }
+
+### 2. Create a new ProductOptionGroup with nested options 创建 Options / Value ~~~~~~~ OK OK OK OK
+
+###
+
+### 3. Attach the newly created group to a product  把 Option / 产品连接起来 ~~~~~~~~~~~ OK OK OK OK
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5adfc212fa32fcfb1f2296a1afb9021adf209e94a47db382d999a63bb04b0369
+
+{ "query":"mutation AttachGroup($productId: ID!, $optionGroupId: ID!){ addOptionGroupToProduct(productId:$productId, optionGroupId:$optionGroupId){ id optionGroups { id translations { languageCode name } } } }", "variables":{ "productId":"1", "optionGroupId":"18" } }
+
+
+### 3. Attach the newly created group to a product  把 Option / 产品连接起来 ~~~~~~~~~~~ OK OK OK OK
+
+
+### 4. 修改 Options Group Name  ~~~~~~~~~~~ 
+
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5adfc212fa32fcfb1f2296a1afb9021adf209e94a47db382d999a63bb04b0369
+
+{ "query":"mutation { updateProductOptionGroup(input:{ id:\"18\", code:\"laptop-hd-disk\", translations:[{ languageCode:en, name:\"Laptop HD\" }] }) { id code translations { languageCode name } options { id code translations { languageCode name } } } }" }
+
+
+### 4. 修改 Options Group Name  ~~~~~~~~~~~ 
+
+
+
+### 5. 修改某一个 Options Value ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK OK
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 5adfc212fa32fcfb1f2296a1afb9021adf209e94a47db382d999a63bb04b0369
+
+{
+  "query": "mutation { updateProductOption(input: { id: \"49\", code: \"64-gb\", translations: [{ languageCode: en, name: \"64GB\" }] }) { id code translations { languageCode name } } }"
+}
+
+
+### 5. 修改某一个 Options Value ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK OK

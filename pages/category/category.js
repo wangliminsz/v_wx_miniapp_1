@@ -1,7 +1,12 @@
 const app = getApp();
 const config = require('../../config.js');
-const { getCollections, getCollection } = require('../../providers/shop/products/products');
-const { formatPrice } = require('../../utils/util.js');
+const {
+  getCollections,
+  getCollection
+} = require('../../providers/shop/products/products');
+const {
+  formatPrice
+} = require('../../utils/util.js');
 
 Page({
   data: {
@@ -16,24 +21,38 @@ Page({
     showBackToTop: false,
     scrollTop: 0,
     isLogin: false,
+    isLoading: true,
   },
 
   async onLoad(options) {
     // 等待应用全局初始化完成 (确保渠道 token 已获取)
     await app.initPromise;
-    this.setData({ isLogin: app.globalData.isLogin });
-    this.loadCategories();
-    if (options.id) {
-      const index = this.data.categories.findIndex(c => c.id == options.id);
-      if (index > -1) {
-        this.setData({ activeCategory: index });
-        this.loadSubCategories(options.id);
+    await app.loginPromise;
+
+    this.setData({
+      isLogin: app.globalData.isLogin,
+      isLoading: false
+    }, () => {
+      this.loadCategories();
+      if (options.id) {
+        const index = this.data.categories.findIndex(c => c.id == options.id);
+        if (index > -1) {
+          this.setData({
+            activeCategory: index
+          });
+          this.loadSubCategories(options.id);
+        }
       }
-    }
+    });
+
   },
 
   onShow() {
-    this.setData({ isLogin: app.globalData.isLogin });
+    // await app.initPromise;
+    // await app.loginPromise;
+    this.setData({
+      isLogin: app.globalData.isLogin
+    });
     app.updateCartBadge();
     if (app.globalData.isLogin) {
       app.syncServerCartCount();
@@ -45,16 +64,18 @@ Page({
       console.log('========== Loading categories from Vendure ==========');
       const collections = await getCollections();
       // console.log('Raw collections from Vendure:', JSON.stringify(collections, null, 2));
-      
+
       if (collections.length === 0) {
         console.log('No collections returned from Vendure, using default categories');
-        this.setData({ categories: config.CATEGORIES });
+        this.setData({
+          categories: config.CATEGORIES
+        });
         return;
       }
-      
+
       const parentCollections = collections.filter(c => !c.parent || c.parent.id === '1' || c.parent.name === '__root_collection__');
       // console.log('Parent collections:', JSON.stringify(parentCollections, null, 2));
-      
+
       const sortedCategories = [];
       parentCollections.forEach(parent => {
         sortedCategories.push({
@@ -62,7 +83,7 @@ Page({
           name: parent.name,
           slug: parent.slug,
         });
-        
+
         if (parent.children && parent.children.length > 0) {
           parent.children.forEach(child => {
             sortedCategories.push({
@@ -75,13 +96,15 @@ Page({
       });
 
       // console.log('Sorted categories:', JSON.stringify(sortedCategories, null, 2));
-      
+
       this.setData({
         categories: sortedCategories,
       });
 
       if (sortedCategories.length > 0 && !this.data.currentSlug) {
-        this.setData({ currentSlug: sortedCategories[0].slug });
+        this.setData({
+          currentSlug: sortedCategories[0].slug
+        });
         this.loadProductsBySlug(sortedCategories[0].slug);
       }
     } catch (error) {
@@ -116,7 +139,9 @@ Page({
       return;
     }
 
-    this.setData({ loading: true });
+    this.setData({
+      loading: true
+    });
 
     try {
       const page = this.data.currentPage + 1;
@@ -127,7 +152,7 @@ Page({
           const product = item.product || {};
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
-          
+
           return {
             id: item.id,
             name: item.name,
@@ -159,7 +184,9 @@ Page({
     } catch (error) {
       console.error('Failed to load products:', error);
     } finally {
-      this.setData({ loading: false });
+      this.setData({
+        loading: false
+      });
     }
   },
 
@@ -173,12 +200,14 @@ Page({
     });
 
     const result = await getCollection(slug, 1, this.data.pageSize);
-    
+
     if (result) {
       const categories = this.data.categories;
       const index = categories.findIndex(c => c.slug === slug);
       if (index > -1) {
-        this.setData({ activeCategory: index });
+        this.setData({
+          activeCategory: index
+        });
       }
 
       if (result.productVariants && result.productVariants.items && result.productVariants.items.length > 0) {
@@ -186,7 +215,7 @@ Page({
           const product = item.product || {};
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
-          
+
           return {
             id: item.id,
             name: item.name,
@@ -202,17 +231,24 @@ Page({
           };
         });
 
-        this.setData({ 
-          products, 
+        this.setData({
+          products,
           loading: false,
           hasMore: result.productVariants.items.length >= this.data.pageSize,
           currentPage: 1,
         });
       } else {
-        this.setData({ products: [], loading: false, hasMore: false });
+        this.setData({
+          products: [],
+          loading: false,
+          hasMore: false
+        });
       }
     } else {
-      this.setData({ loading: false, hasMore: false });
+      this.setData({
+        loading: false,
+        hasMore: false
+      });
     }
   },
 
@@ -247,7 +283,7 @@ Page({
   goToProduct(e) {
     const productId = e.currentTarget.dataset.id;
     const productSlug = e.currentTarget.dataset.slug;
-    
+
     if (productSlug) {
       wx.navigateTo({
         url: `/pages/variant/variant?productSlug=${productSlug}&variantId=${productId}`,
@@ -293,7 +329,9 @@ Page({
   async loadProductsBySlugMore(slug) {
     if (this.data.loading || !this.data.hasMore) return;
 
-    this.setData({ loading: true });
+    this.setData({
+      loading: true
+    });
 
     try {
       const page = this.data.currentPage + 1;
@@ -304,7 +342,7 @@ Page({
           const product = item.product || {};
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
-          
+
           return {
             id: item.id,
             name: item.name,
@@ -329,12 +367,16 @@ Page({
           hasMore: uniqueProducts.length >= this.data.pageSize,
         });
       } else {
-        this.setData({ hasMore: false });
+        this.setData({
+          hasMore: false
+        });
       }
     } catch (error) {
       console.error('Failed to load more products:', error);
     } finally {
-      this.setData({ loading: false });
+      this.setData({
+        loading: false
+      });
     }
   },
 
@@ -351,14 +393,20 @@ Page({
 
   onScroll(e) {
     if (e.detail.scrollTop > 500) {
-      this.setData({ showBackToTop: true });
+      this.setData({
+        showBackToTop: true
+      });
     } else {
-      this.setData({ showBackToTop: false });
+      this.setData({
+        showBackToTop: false
+      });
     }
   },
 
   scrollToTop() {
-    this.setData({ scrollTop: 0 });
+    this.setData({
+      scrollTop: 0
+    });
   },
 
   // goToSearch() {

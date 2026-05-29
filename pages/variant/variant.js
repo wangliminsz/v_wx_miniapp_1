@@ -353,14 +353,16 @@ Page({
     return 'stock-in';
   },
 
-  getHumanFriendlyErrorMessage(errorCode) {
+  getHumanFriendlyErrorMessage(errorCode, originalMessage) {
     const errorMessages = {
       'INSUFFICIENT_STOCK_ERROR': '该商品库存不足，无法加入采购车',
       'ORDER_LIMIT_ERROR': '已达到该商品的最大购买数量',
       'NEGATIVE_QUANTITY_ERROR': '数量无效',
       'INSUFFICIENT_STOCK': '抱歉，该商品requested数量暂无货',
     };
-    return errorMessages[errorCode] || '加入采购车失败，请重试';
+    const friendlyMessage = errorMessages[errorCode] || '加入采购车失败，请重试';
+    // Include original message for debugging
+    return originalMessage ? `${friendlyMessage} (${originalMessage})` : friendlyMessage;
   },
 
   closeError() {
@@ -474,7 +476,7 @@ Page({
       const addResult = result?.addItemToOrder;
 
       if (addResult?.__typename === 'OrderLimitError' || addResult?.__typename === 'InsufficientStockError') {
-        this.setData({ addToCartError: this.getHumanFriendlyErrorMessage(addResult.errorCode) });
+        this.setData({ addToCartError: this.getHumanFriendlyErrorMessage(addResult.errorCode, addResult.message) });
       } else {
         wx.showToast({
           title: '已加入采购车',
@@ -530,6 +532,14 @@ Page({
   },
 
   goToCart() {
+    // Store current page (full path with query) so cart can navigate back
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const currentPath = currentPage.route;
+    const queryString = Object.keys(currentPage.options || {})
+      .map(key => `${key}=${encodeURIComponent(currentPage.options[key])}`)
+      .join('&');
+    app.globalData.previousPage = queryString ? `${currentPath}?${queryString}` : currentPath;
     wx.switchTab({
       url: '/pages/cart/cart',
     });

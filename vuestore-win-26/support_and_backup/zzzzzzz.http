@@ -1,0 +1,175 @@
+
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK    0
+
+#### Admin API --> TOKEN TOKEN TOKEN ---- OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  ADMIN TOKEN TOKEN TOKEN OK OK OK    0
+
+
+
+
+curl -X POST https://shop.favor100.site/admin-api \
+-H "Content-Type: application/json" \
+-d '{"query": "{ products(options: { take: 1 }) { totalItemsCount } }"}'
+
+
+############################################### 列出所有 Assets ~~~~~~~~~ OK OK OK    1
+### 1 List all assets
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+{
+  "query": "query ListAssets($options: AssetListOptions){ assets(options:$options){ items{ id name source preview createdAt } totalItems } }",
+  "variables": { "options": { "take": 500, "skip": 0 } }
+}
+
+
+############################################### 列出所有 Assets ~~~~~~~~~ OK OK OK    1
+
+
+
+############################################### 列出 Product / Variant 的引用 ~~ OK    2
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+{
+  "query": "query ProductsWithAssets($options: ProductListOptions){ products(options:$options){ items{ id slug assets{ id name } featuredAsset{ id name } variants{ id sku assets{ id name } featuredAsset{ id name } } } totalItems } }",
+  "variables": { "options": { "take": 500, "skip": 0 } }
+}
+
+######
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+{
+  "query": "query Products($options: ProductListOptions) { products(options: $options) { items { slug featuredAsset { name } } totalItems } }",
+  "variables": {
+    "options": {
+      "take": 500,
+      "skip": 0
+    }
+  }
+}
+
+
+
+############################################### 列出 Product / Variant 的引用 ~~ OK    2
+
+
+############################################### 列出 Collections 的 Assets ~~~~~ OK    3
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+{
+  "query": "query CollectionsWithAssets($options: CollectionListOptions){ collections(options:$options){ items{ id name featuredAsset{ id name } } totalItems } }",
+  "variables": { "options": { "take": 200, "skip": 0 } }
+}
+
+
+############################################### 列出 Collections 的 Assets ~~~~~ OK    3
+
+
+
+
+
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+{
+  "query": "mutation UpdateAsset($input: UpdateAssetInput!) { updateAsset(input: $input) { id name source preview } }",
+  "variables": {
+    "input": {
+      "id": "36",
+      "source": "https://vendure-1304214433.cos.ap-guangzhou.myqcloud.com/natalia-y-345738-unsplash.jpg",
+      "preview": "https://vendure-1304214433.cos.ap-guangzhou.myqcloud.com/natalia-y-345738-unsplash__preview.jpg"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+###############################################
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+###############################################
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+###############################################
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 51b7fe3022a95b9aa46fa51f2c6645cd39943281d9ad4840f99ce4bb5178dc5b
+
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################################### SHOP TOKEN TOKEN TOKEN OK OK OK
+
+### shop-api TOKEN TOKEN TOKEN ----------- OK OK OK --> from Header could get the token
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+############################################### SHOP TOKEN TOKEN TOKEN OK OK OK
+
+
+
+

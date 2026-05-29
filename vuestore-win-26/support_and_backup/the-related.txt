@@ -1,0 +1,564 @@
+
+#################
+
+step 1:
+get product id from slug
+
+
+GET http://localhost:3000/api/vendure-product?where[slug][equals]=ponatinib&limit=1&depth=0
+
+
+
+
+{
+  "docs": [
+    {
+      "id": "60",
+      "name": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+      "title": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+      "slug": "ponatinib",
+      "productVariants": [],
+      "richDescription": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Hello Vendure",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "heroImage": null,
+      "storyImages": [],
+      "status": "published",
+      "taxonomy": {
+        "category": "oncology-info",
+        "subcategory": [
+          "nil",
+          "leukemia"
+        ]
+      },
+      "updatedAt": "2026-01-30T22:59:16.642Z",
+      "createdAt": "2026-01-30T22:56:06.816Z"
+    }
+  ],
+  "hasNextPage": false,
+  "hasPrevPage": false,
+  "limit": 1,
+  "nextPage": null,
+  "page": 1,
+  "pagingCounter": 1,
+  "prevPage": null,
+  "totalDocs": 1,
+  "totalPages": 1
+}
+
+
+########################################################################################################################################
+
+
+########################################################################################################################################
+
+step 2: 
+get related articles
+
+GET http://localhost:3000/api/posts?where[products][equals]=60&limit=10&depth=1&sort=-createdAt
+
+
+
+result:
+
+HTTP/1.1 200 OK
+Accept-CH: Sec-CH-Prefers-Color-Scheme
+vary: Sec-CH-Prefers-Color-Scheme, RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch
+Critical-CH: Sec-CH-Prefers-Color-Scheme
+X-Powered-By: Next.js, Payload
+access-control-allow-headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, Content-Encoding, x-apollo-tracing, X-Payload-HTTP-Method-Override
+access-control-allow-methods: PUT, PATCH, POST, GET, DELETE, OPTIONS
+content-type: application/json
+Date: Sat, 31 Jan 2026 00:27:40 GMT
+Connection: keep-alive
+keep-alive: timeout=5
+Transfer-Encoding: chunked
+
+{
+  "docs": [
+    {
+      "id": 3,
+      "slug": "third",
+      "title": "3rd Article",
+      "content": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "3rd 3rd 3rd",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "excerpt": "Short summary for My third Blog for Payload CMS",
+      "featuredImage": {
+        "id": 3,
+        "alt": "草原树木",
+        "updatedAt": "2026-01-30T23:14:56.892Z",
+        "createdAt": "2026-01-30T23:14:55.463Z",
+        "url": "http://192.168.0.52:3000/api/media/file/ven23.jpg",
+        "thumbnailURL": "http://192.168.0.52:3000/api/media/file/ven23-400x300.webp",
+        "filename": "ven23.jpg",
+        "mimeType": "image/jpeg",
+        "filesize": 138688,
+        "width": 1024,
+        "height": 683,
+        "focalX": 50,
+        "focalY": 50,
+        "sizes": {
+          "thumbnail": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven23-400x300.webp",
+            "width": 400,
+            "height": 300,
+            "mimeType": "image/webp",
+            "filesize": 22580,
+            "filename": "ven23-400x300.webp"
+          },
+          "card": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven23-768x432.jpg",
+            "width": 768,
+            "height": 432,
+            "mimeType": "image/jpeg",
+            "filesize": 66207,
+            "filename": "ven23-768x432.jpg"
+          },
+          "tablet": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven23-1024x683.jpg",
+            "width": 1024,
+            "height": 683,
+            "mimeType": "image/jpeg",
+            "filesize": 137095,
+            "filename": "ven23-1024x683.jpg"
+          },
+          "full": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven23-1024x683.jpg",
+            "width": 1024,
+            "height": 683,
+            "mimeType": "image/jpeg",
+            "filesize": 137095,
+            "filename": "ven23-1024x683.jpg"
+          }
+        }
+      },
+      "status": "published",
+      "publishedDate": "2026-01-30T23:15:18.415Z",
+      "products": [
+        {
+          "id": "60",
+          "name": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "title": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "slug": "ponatinib",
+          "productVariants": [],
+          "richDescription": {
+            "root": {
+              "type": "root",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "type": "paragraph",
+                  "format": "",
+                  "indent": 0,
+                  "version": 1,
+                  "children": [
+                    {
+                      "mode": "normal",
+                      "text": "Hello Vendure",
+                      "type": "text",
+                      "style": "",
+                      "detail": 0,
+                      "format": 0,
+                      "version": 1
+                    }
+                  ],
+                  "direction": null,
+                  "textStyle": "",
+                  "textFormat": 0
+                }
+              ],
+              "direction": null
+            }
+          },
+          "heroImage": null,
+          "storyImages": [],
+          "status": "published",
+          "taxonomy": {
+            "category": "oncology-info",
+            "subcategory": [
+              "nil",
+              "leukemia"
+            ]
+          },
+          "updatedAt": "2026-01-30T22:59:16.642Z",
+          "createdAt": "2026-01-30T22:56:06.816Z"
+        }
+      ],
+      "taxonomy": {
+        "category": "other-info",
+        "subcategory": [
+          "nil"
+        ]
+      },
+      "updatedAt": "2026-01-30T23:15:18.420Z",
+      "createdAt": "2026-01-30T23:15:18.419Z"
+    },
+    {
+      "id": 2,
+      "slug": "second",
+      "title": "2nd Article",
+      "content": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "2nd 2nd 2nd",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "excerpt": "Short summary for My second Blog for Payload CMS",
+      "featuredImage": {
+        "id": 2,
+        "alt": "草原春天",
+        "updatedAt": "2026-01-30T23:12:12.369Z",
+        "createdAt": "2026-01-30T23:12:11.297Z",
+        "url": "http://192.168.0.52:3000/api/media/file/ven08.jpg",
+        "thumbnailURL": "http://192.168.0.52:3000/api/media/file/ven08-400x300.webp",
+        "filename": "ven08.jpg",
+        "mimeType": "image/jpeg",
+        "filesize": 69691,
+        "width": 1024,
+        "height": 683,
+        "focalX": 50,
+        "focalY": 50,
+        "sizes": {
+          "thumbnail": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven08-400x300.webp",
+            "width": 400,
+            "height": 300,
+            "mimeType": "image/webp",
+            "filesize": 8286,
+            "filename": "ven08-400x300.webp"
+          },
+          "card": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven08-768x432.jpg",
+            "width": 768,
+            "height": 432,
+            "mimeType": "image/jpeg",
+            "filesize": 35677,
+            "filename": "ven08-768x432.jpg"
+          },
+          "tablet": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven08-1024x683.jpg",
+            "width": 1024,
+            "height": 683,
+            "mimeType": "image/jpeg",
+            "filesize": 63773,
+            "filename": "ven08-1024x683.jpg"
+          },
+          "full": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven08-1024x683.jpg",
+            "width": 1024,
+            "height": 683,
+            "mimeType": "image/jpeg",
+            "filesize": 63773,
+            "filename": "ven08-1024x683.jpg"
+          }
+        }
+      },
+      "status": "published",
+      "publishedDate": "2026-01-30T23:13:33.629Z",
+      "products": [
+        {
+          "id": "60",
+          "name": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "title": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "slug": "ponatinib",
+          "productVariants": [],
+          "richDescription": {
+            "root": {
+              "type": "root",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "type": "paragraph",
+                  "format": "",
+                  "indent": 0,
+                  "version": 1,
+                  "children": [
+                    {
+                      "mode": "normal",
+                      "text": "Hello Vendure",
+                      "type": "text",
+                      "style": "",
+                      "detail": 0,
+                      "format": 0,
+                      "version": 1
+                    }
+                  ],
+                  "direction": null,
+                  "textStyle": "",
+                  "textFormat": 0
+                }
+              ],
+              "direction": null
+            }
+          },
+          "heroImage": null,
+          "storyImages": [],
+          "status": "published",
+          "taxonomy": {
+            "category": "oncology-info",
+            "subcategory": [
+              "nil",
+              "leukemia"
+            ]
+          },
+          "updatedAt": "2026-01-30T22:59:16.642Z",
+          "createdAt": "2026-01-30T22:56:06.816Z"
+        }
+      ],
+      "taxonomy": {
+        "category": "other-disease-info",
+        "subcategory": [
+          "liver-disease",
+          "psoriasis"
+        ]
+      },
+      "updatedAt": "2026-01-30T23:13:33.645Z",
+      "createdAt": "2026-01-30T23:13:33.638Z"
+    },
+    {
+      "id": 1,
+      "slug": "first",
+      "title": "1st Article",
+      "content": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "the first article",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "excerpt": "Short summary for My first Blog for Payload CMS",
+      "featuredImage": {
+        "id": 1,
+        "alt": "草原美景",
+        "updatedAt": "2026-01-30T23:06:44.590Z",
+        "createdAt": "2026-01-30T23:06:42.715Z",
+        "url": "http://192.168.0.52:3000/api/media/file/ven22.jpg",
+        "thumbnailURL": "http://192.168.0.52:3000/api/media/file/ven22-400x300.webp",
+        "filename": "ven22.jpg",
+        "mimeType": "image/jpeg",
+        "filesize": 199146,
+        "width": 1024,
+        "height": 668,
+        "focalX": 50,
+        "focalY": 50,
+        "sizes": {
+          "thumbnail": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven22-400x300.webp",
+            "width": 400,
+            "height": 300,
+            "mimeType": "image/webp",
+            "filesize": 33330,
+            "filename": "ven22-400x300.webp"
+          },
+          "card": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven22-768x432.jpg",
+            "width": 768,
+            "height": 432,
+            "mimeType": "image/jpeg",
+            "filesize": 98607,
+            "filename": "ven22-768x432.jpg"
+          },
+          "tablet": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven22-1024x668.jpg",
+            "width": 1024,
+            "height": 668,
+            "mimeType": "image/jpeg",
+            "filesize": 197860,
+            "filename": "ven22-1024x668.jpg"
+          },
+          "full": {
+            "url": "http://192.168.0.52:3000/api/media/file/ven22-1024x668.jpg",
+            "width": 1024,
+            "height": 668,
+            "mimeType": "image/jpeg",
+            "filesize": 197860,
+            "filename": "ven22-1024x668.jpg"
+          }
+        }
+      },
+      "status": "published",
+      "publishedDate": "2026-01-30T23:07:05.207Z",
+      "products": [
+        {
+          "id": "60",
+          "name": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "title": "普纳替尼,普那替尼,帕纳替尼,波纳替尼,泊那替尼,Ponatinib,PONADX",
+          "slug": "ponatinib",
+          "productVariants": [],
+          "richDescription": {
+            "root": {
+              "type": "root",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "type": "paragraph",
+                  "format": "",
+                  "indent": 0,
+                  "version": 1,
+                  "children": [
+                    {
+                      "mode": "normal",
+                      "text": "Hello Vendure",
+                      "type": "text",
+                      "style": "",
+                      "detail": 0,
+                      "format": 0,
+                      "version": 1
+                    }
+                  ],
+                  "direction": null,
+                  "textStyle": "",
+                  "textFormat": 0
+                }
+              ],
+              "direction": null
+            }
+          },
+          "heroImage": null,
+          "storyImages": [],
+          "status": "published",
+          "taxonomy": {
+            "category": "oncology-info",
+            "subcategory": [
+              "nil",
+              "leukemia"
+            ]
+          },
+          "updatedAt": "2026-01-30T22:59:16.642Z",
+          "createdAt": "2026-01-30T22:56:06.816Z"
+        }
+      ],
+      "taxonomy": {
+        "category": "newest-news",
+        "subcategory": [
+          "nil"
+        ]
+      },
+      "updatedAt": "2026-01-30T23:07:05.231Z",
+      "createdAt": "2026-01-30T23:07:05.230Z"
+    }
+  ],
+  "hasNextPage": false,
+  "hasPrevPage": false,
+  "limit": 10,
+  "nextPage": null,
+  "page": 1,
+  "pagingCounter": 1,
+  "prevPage": null,
+  "totalDocs": 3,
+  "totalPages": 1
+}
+
+#################

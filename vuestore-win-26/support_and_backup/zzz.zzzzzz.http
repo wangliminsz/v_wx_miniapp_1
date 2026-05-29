@@ -1,0 +1,158 @@
+# collectionProductSummary
+# ba077fcc792d385e294456615970d6682f7dade6880e57f997a2dd89cd8c4b0b
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+vendure-token: k9m2p7r4a1q8y5z3w6v1
+
+{
+  "query": "query { product(slug: \"laptop\") { id name slug variants { id name stockLevel } } }"
+}
+
+
+##### OK OK 
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 63bc0b9539e6a59c5f1f00bd8f7d4ae4ed3f5fc7b05c9a7cba8ed3ce0562e270
+vendure-token: k9m2p7r4a1q8y5z3w6v1
+
+{
+  "query": "query { product(id: \"1\") { id name variants { id name stockOnHand stockAllocated } } }"
+}
+
+
+#####
+
+### 验证库存是否恢复
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer 63bc0b9539e6a59c5f1f00bd8f7d4ae4ed3f5fc7b05c9a7cba8ed3ce0562e270
+vendure-token: k9m2p7r4a1q8y5z3w6v1
+
+{
+  "query": "query { product(id: \"1\") { id name variants { id name stockOnHand stockAllocated stockLevel } } }"
+}
+
+####
+
+
+
+
+
+
+
+
+
+### Search products with options - Basic (term: iphone, page 1)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer ba077fcc792d385e294456615970d6682f7dade6880e57f997a2dd89cd8c4b0b
+
+{
+  "query": "query SearchProductsWithOptions($term: String!, $page: Int, $pageSize: Int) { searchProductsWithOptions(term: $term, page: $page, pageSize: $pageSize) { totalCount items { productId productName slug description productAsset { id preview } productFacets { id name code } variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax variants { variantId variantName price priceWithTax variantFacets { id name code } options { id name } } } } }",
+  "variables": {
+    "term": "laptop",
+    "page": 1,
+    "pageSize": 12
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################ 列出 Collections 中的产品数量和信息 --> OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 5ff6ddbc08a0c6dc630e1c1c9a174f016fc367a13aa1bed3d97da7180868a6d9
+
+{
+  "query": "query GetCollections { collections { items { id name slug parent { name } featuredAsset { id preview } children { id name slug featuredAsset { id preview } } productVariants { totalItems } productCount } } }"
+}
+
+
+#### 简化版本：
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 5ff6ddbc08a0c6dc630e1c1c9a174f016fc367a13aa1bed3d97da7180868a6d9
+
+{
+  "query": "query GetCollections { collections { items { id name slug parent { name } assets { id source preview } featuredAsset { id source preview } children { id name slug assets { id source preview } featuredAsset { id source preview } } } } }"
+}
+
+#### 简化版本：
+
+################################ 列出 Collections 中的产品数量和信息 --> OK OK OK
+
+
+
+##################### 根据 Facet 列出 Collections 中的产品数量和信息 --> OK OK OK
+### FacetFilterPlugin
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 5ff6ddbc08a0c6dc630e1c1c9a174f016fc367a13aa1bed3d97da7180868a6d9
+
+{
+  "query": "query { productsByFacets(collectionId: \"2\", facetValueIds: []) { totalCount items { id name } } }"
+}
+
+### FacetFilterPlugin
+##################### 根据 Facet 列出 Collections 中的产品数量和信息 --> OK OK OK
+
+
+
+
+###################################### 列出 Collections 中的产品信息 --> OK OK OK
+### CollectionProductSummaryPlugin
+
+### Fetch product summaries for a collection (with pagination)
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer 5ff6ddbc08a0c6dc630e1c1c9a174f016fc367a13aa1bed3d97da7180868a6d9
+
+{
+  "query": "query GetCollectionProductSummary($collectionId: ID!, $skip: Int, $take: Int) { collectionProductSummary(collectionId: $collectionId, skip: $skip, take: $take) { productId productName slug description featuredAsset { id preview } variantCount minPrice maxPrice minPriceWithTax maxPriceWithTax facetValues { id name } } }",
+  "variables": {
+    "collectionId": "2",
+    "skip": 0,
+    "take": 40
+  }
+}
+
+### CollectionProductSummaryPlugin
+###################################### 列出 Collections 中的产品信息 --> OK OK OK

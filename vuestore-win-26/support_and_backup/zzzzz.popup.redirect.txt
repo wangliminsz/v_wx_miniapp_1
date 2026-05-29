@@ -1,0 +1,86 @@
+you can reliably detect whether the browser will allow a new window/tab via JavaScript — which covers most cases where payment gateways fail to open.
+Recommended Detection Method (works in most modern mobile/desktop browsers)
+TypeScript// e.g. in a composable, service, or inside your payment method
+function isPopupLikelyBlocked(): Promise<boolean> {
+  return new Promise((resolve) => {
+    // We must do this synchronously inside a user gesture (click/tap)
+    const testWindow = window.open('', '_blank', 'noopener,noreferrer,width=1,height=1');
+
+    if (!testWindow || testWindow.closed || typeof testWindow.closed === 'undefined') {
+      // Immediately blocked → very high confidence
+      resolve(true);
+      return;
+    }
+
+    // Some browsers return a window reference but close it instantly
+    // Give it a tiny moment then check again
+    setTimeout(() => {
+      try {
+        if (testWindow.closed || testWindow.location.href === 'about:blank') {
+          resolve(true);
+        } else {
+          // Success → clean up
+          testWindow.close();
+          resolve(false);
+        }
+      } catch (e) {
+        // Security error or closed → treat as blocked
+        resolve(true);
+      }
+    }, 150); // 100–300 ms is usually enough
+  });
+}
+How to use it in Vue (Composition API example)
+vue<template>
+  <div>
+    <button @click="handlePayment">Pay Now</button>
+
+    <div v-if="showPopupWarning" class="popup-warning">
+      <p>The payment page could not open because pop-ups/redirects are blocked.</p>
+      <p>Please allow pop-ups for this site:</p>
+      <ol>
+        <li>Tap the lock icon 🔒 next to the address bar</li>
+        <li>Find "Pop-ups and redirects" → set to Allow</li>
+        <li>Or go to Browser Settings → Site settings → Pop-ups and redirects → Allow</li>
+      </ol>
+      <button @click="showPopupWarning = false">Got it</button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const showPopupWarning = ref(false);
+
+async function handlePayment() {
+  // 1. First try to detect
+  const blocked = await isPopupLikelyBlocked();
+
+  if (blocked) {
+    showPopupWarning.value = true;
+    return;
+  }
+
+  // 2. If not blocked → proceed with real payment redirect
+  try {
+    // Option A: Most common for payment gateways
+    window.open('https://payment-gateway.com/pay?session=xxx', '_blank', 'noopener,noreferrer');
+
+    // Option B: If your gateway supports it — do location.href redirect instead
+    // window.location.href = 'https://payment-gateway.com/pay?...';
+  } catch (err) {
+    showPopupWarning.value = true;
+  }
+}
+</script>
+
+<style scoped>
+.popup-warning {
+  margin: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+}
+</style>

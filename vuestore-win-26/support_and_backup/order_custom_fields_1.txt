@@ -1,0 +1,129 @@
+customFields: {
+
+Order: [
+
+{ name: 'amountPaid', type: 'int', public: true, // Make it available to the Shop API defaultValue: 0, //label: 'The total amount paid on this order', }, \],
+}
+
+Above is my vendure order table, custom fields, I want to add three more: (1)when user enter /checkout/payment page, I want to set a timestamp, then could calculte the expire time of the order, (2)user could upload images to the order, the invoice or payment clip etc etc, (3) user could leave a message to this order, How to design / add these 3 fields?? thanks!
+
+Response complete
+Gemini replied
+To add these capabilities to your Vendure Order entity, you need to define three specific custom fields in your vendure-config.ts.
+
+Here is the design and the code implementation.
+
+1. The Configuration (vendure-config.ts)
+You will need to import Asset from @vendure/core to link images.
+
+TypeScript
+import { Asset } from '@vendure/core'; // Don't forget this import!
+
+// ... inside your VendureConfig
+customFields: {
+    Order: [
+        // Your existing field
+        {
+            name: 'amountPaid',
+            type: 'int',
+            public: true,
+            defaultValue: 0,
+        },
+        
+        // 1. Timestamp for Payment Page Entry
+        {
+            name: 'paymentPageVisitedAt',
+            type: 'datetime',
+            public: true,
+            nullable: true, // It is null until they reach the page
+            ui: { component: 'date-form-input' }, // Nice calendar in Admin UI
+            label: [{ languageCode: 'en', value: 'Payment Page Visited At' }],
+        },
+
+        // 2. File Attachments (Invoices/Clips)
+        {
+            name: 'paymentProofs',
+            type: 'relation',
+            entity: Asset,
+            list: true, // Allows multiple images
+            public: true,
+            label: [{ languageCode: 'en', value: 'Payment Proofs/Invoices' }],
+        },
+
+        // 3. User Message
+        {
+            name: 'customerMessage',
+            type: 'text', // 'text' allows long content, 'string' is limited to 255 chars
+            public: true,
+            nullable: true,
+            label: [{ languageCode: 'en', value: 'Customer Message' }],
+        },
+    ],
+},
+2. How to implement the logic (Frontend/API)
+Defining the fields creates the columns in the database, but you need to trigger the updates from your storefront.
+
+A. Setting the Timestamp (paymentPageVisitedAt)
+The backend cannot automatically know when a user's browser loads a specific page. Your storefront (Angular/React/Vue) must tell the server.
+
+When the /checkout/payment component loads (mounts):
+Execute this GraphQL mutation:
+
+graphql
+mutation SetPaymentTimestamp {
+  setOrderCustomFields(input: {
+    customFields: {
+      paymentPageVisitedAt: "2023-10-27T10:00:00.000Z" // Send current JS Date
+    }
+  }) {
+    ... on Order {
+      id
+      code
+    }
+  }
+}
+Note: You can calculate the expiration time in your backend code by doing order.customFields.paymentPageVisitedAt + 30 minutes.
+
+B. Uploading Images (paymentProofs)
+This is a two-step process in Vendure:
+
+Upload the file using the upload mutation. This returns an Asset ID.
+
+Link the Asset to the Order.
+
+graphql
+mutation LinkPaymentProof($fileIds: [ID!]) {
+  setOrderCustomFields(input: {
+    customFields: {
+      // Pass the Array of Asset IDs you got from the upload
+      paymentProofs: $fileIds 
+    }
+  }) {
+    ... on Order {
+      id
+    }
+  }
+}
+C. Saving the Message (customerMessage)
+You can add a <textarea> on your checkout page. When the user types or clicks "Place Order", send this:
+
+graphql
+mutation SetCustomerMessage($msg: String!) {
+  setOrderCustomFields(input: {
+    customFields: {
+      customerMessage: $msg
+    }
+  }) {
+    ... on Order {
+      id
+    }
+  }
+}
+Summary of Design Choice
+datetime: Best for time calculations.
+
+relation (Asset): The native way to handle files in Vendure. It ensures images are optimized and stored correctly in your assets folder/S3. list: true allows them to upload 1 or 5 images.
+
+text: Selected instead of string because users might write long notes (more than 255 characters).
+
+Do you need help with the Angular/React code to trigger these mutations?

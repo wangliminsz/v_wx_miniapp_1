@@ -1,0 +1,544 @@
+@activeOrderCode=2FG5QAGKCXUQC1WR
+@orderCode=6B86VAPKDTNBJRPK
+
+
+
+###
+
+### Reactivate order successfully
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation ReactivateOrder($orderCode: String!) { reactivateOrder(orderCode: $orderCode) { id code state lines { id quantity productVariant { id sku name } } customer { id firstName lastName } } }",
+  "variables": {
+    "orderCode": "{{orderCode}}"
+  }
+}
+
+
+###
+
+
+
+
+### 查询订单 ID 和状态 -------------------------~ OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "query GetOrderByCode($code: String!) { orderByCode(code: $code) { id state } }",
+    "variables": {
+        "code": "{{orderCode}}"
+    }
+}
+
+### 查询订单 ID 和状态 -------------------------~ OK OK OK OK
+
+
+#################################### 模拟付款，必须用 ID 
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation SimulatePayment($orderId: ID!) { simulatePayment(orderId: $orderId) { id code state totalWithTax payments { id method amount state transactionId metadata createdAt } } }",
+  "variables": {
+    "orderId": "24"
+  }
+}
+
+#################################### 模拟付款，必须用 ID 
+
+
+
+
+#################################### 查询订单付款情况 OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrderPayments($code: String!) { orderByCode(code: $code) { code state totalWithTax payments { id method amount state transactionId metadata createdAt } } }",
+  "variables": {
+    "code": "CUF2LA4WZCZ1DPNB"
+  }
+}
+
+#################################### 查询订单付款情况 OK OK OK
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetShippingAddress($code: String!) { orderByCode(code: $code) { code state shippingAddress { fullName streetLine1 streetLine2 city postalCode province phoneNumber country } } }",
+  "variables": {
+    "code": "A2FRE73DBU54W422"
+  }
+}
+
+
+###
+
+
+###
+
+
+
+
+###
+
+
+
+
+
+
+
+# @frontUrl=https://70a351737c06.ngrok-free.app
+# backendUrl=VENDURE_HOST=https://7f86d4cef4de.ngrok-free.app
+# "cancelURL": "https://{{frontUrl}}/checkout/cancel/{{activeOrderCode}}"
+
+@frontUrl=http://localhost:8080
+
+
+############# 最小 Plugin 样例
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation { myExample }"
+}
+
+
+############# 最小 Plugin 样例
+
+
+### 4HJT6D9Y8JBXTN9Q  YTAR3T8EF9GX6HKG
+
+
+########################################### 用户取消订单 ----- OK OK OK OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation CancelMyOrder($code: String!) { cancelMyOrder(code: $code) { id code state } }",
+  "variables": {
+    "code": "M9XLC2FCRWPX8NHN"
+  }
+}
+
+
+
+
+################################# 查询订单号码 状态等等 ~ OK OK OK  
+
+
+POST {{shopApiUrl}}
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "query GetOrderForProof($code: String!) { orderByCode(code: $code) { id code state payments { id method state metadata } } }",
+    "variables": {
+        "code": "{{orderCode}}"
+    }
+}
+
+##############################
+@admin_token=07cd7fc293f438b0d8c2e2e0cdc3dc8da46ee32f2e23849c209ca738b7cb2d0b
+###
+
+
+############################## Admin 取消订单 ---》 Cancel Order --> OK OK OK
+
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+Authorization: Bearer {{admin_token}}
+
+{
+  "query": "mutation CancelOrder($input: CancelOrderInput!) { cancelOrder(input: $input) { ... on Order { id code state } ... on ErrorResult { errorCode message } } }",
+  "variables": {
+    "input": {
+      "orderId": "30"
+    }
+  }
+}
+
+
+
+
+############
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation CancelMyOrder($code: String!) { cancelMyOrder(code: $code) { id code state } }",
+  "variables": {
+    "code": "YTAR3T8EF9GX6HKG"
+  }
+}
+
+
+
+######
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation CancelMyOrder($code: String!) { cancelMyOrder(code: $code) { id code state } }",
+  "variables": {
+    "code": "YTAR3T8EF9GX6HKG"
+  }
+}
+
+
+
+###
+
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation CancelMyOrder($code: String!) { cancelMyOrder(code: $code) { id code state payments { id state } } }",
+  "variables": {
+    "code": "YTAR3T8EF9GX6HKG"
+  }
+}
+
+
+### Cancel an unsettled order  -- null null null  null null null  null null null
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation CancelMyOrder($code: String!) { cancelMyOrder(code: $code) { id code state } }",
+  "variables": {
+    "code": "4HJT6D9Y8JBXTN9Q"
+  }
+}
+
+
+### 查询订单中项目 ------------- OK OK OK
+
+POST {{shopApiUrl}}
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrderWithItems($code: String!) { orderByCode(code: $code) { id code state totalWithTax lines { quantity linePriceWithTax productVariant { name sku } } } }",
+  "variables": {
+    "code": "{{orderCode}}"
+  }
+}
+
+
+
+###  拿到未付款订单
+
+
+POST {{shopApiUrl}}
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetUnsettledOrders { activeCustomer { orders { items { id code state payments { id method state metadata } } } } }"
+}
+
+
+###
+
+
+### 三部曲  ~ OK OK OK ~ OK OK OK ~ OK OK OK ~ OK OK OK  
+
+################################# 查询 ~ OK OK OK  
+
+POST {{shopApiUrl}}
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "query GetOrderForProof($code: String!) { orderByCode(code: $code) { id code state payments { id method state metadata } } }",
+    "variables": {
+        "code": "{{orderCode}}"
+    }
+}
+
+##############################
+
+###
+# 2️⃣ 转换订单状态为 ArrangingPayment  / AddingItems / PaymentSettled
+
+# 先查询 ID 和状态 -------------------------~ OK OK OK OK
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "query GetOrderByCode($code: String!) { orderByCode(code: $code) { id state } }",
+    "variables": {
+        "code": "{{orderCode}}"
+    }
+}
+
+###
+
+
+
+
+################################# 订单号 查询 订单 ~ OK OK OK ~ OK OK OK OK OK
+# 1️⃣ 查询订单状态 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+# "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state } }",
+# A6D6YNFD9TCCW4AN
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state totalWithTax lines { id productVariant { id name sku } quantity linePriceWithTax } payments { id method state amount transactionId } shippingLines { id priceWithTax shippingMethod { id code name description } } } }",
+  "variables": {
+    "code": "WY1AK3G8SP2UUQTH"
+  }
+}
+
+################################# 订单号 查询 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query { activeOrder { id code state totalWithTax lines { id productVariant { name } quantity } payments { id method state amount transactionId }  shippingLines { id priceWithTax shippingMethod { id code name description } } } }"
+}
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation TransitionOrder($state: String!) { transitionOrderToState(state: $state) { ... on Order { id code state } ... on OrderStateTransitionError { message } } }",
+  "variables": {
+    "state": "ArrangingPayment"
+  }
+}
+
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation AddPaymentToOrder($input: PaymentInput!) { addPaymentToOrder(input: $input) { __typename ... on Order { payments { id state method metadata } } ... on ErrorResult { errorCode message } } }",
+  "variables": {
+    "input": {
+      "method": "nowpayments_auth",
+      "metadata": {}
+    }
+  }
+}
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+@backend_svr=https://7f86d4cef4de.ngrok-free.app/
+
+@baseUrl=http://192.168.0.53:3000
+@shopApiUrl={{baseUrl}}/shop-api
+@paymentMethodCode=nowpayments
+# @paymentMethodCode = "nowpayments-payment"
+@shop_token=f7428fa7babc609fcfa3274a23b119a28f95d41bfa752bbb5b7f85339985a05b
+
+
+
+###
+
+
+### 1️⃣ 查询订单状态 过于简单 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state } }",
+  "variables": {
+    "code": "AKFKZ9QRVXX5QUK9"
+  }
+}
+
+### 1️⃣ 查询订单状态 过于简单 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+
+
+
+# 2️⃣ 转换订单状态为 ArrangingPayment  / AddingItems / PaymentSettled ~ OK OK OK  
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation TransitionOrder($state: String!) { transitionOrderToState(state: $state) { ... on Order { id code state } ... on OrderStateTransitionError { message } } }",
+  "variables": {
+    "state": "ArrangingPayment"
+  }
+}
+
+###
+
+
+###
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "mutation AddPaymentToOrder($input: PaymentInput!) { addPaymentToOrder(input: $input) { __typename ... on Order { id payments { id state method metadata } } ... on IneligiblePaymentMethodError { errorCode message } } }",
+    "variables": {
+        "input": {
+            "method": "{{paymentMethodCode}}",
+            "metadata": {}
+        }
+    }
+}
+
+
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+###  70d627868ab4abcbe905fb54a9302dbbbac7087c5b0278efba68e04fac56a25c
+
+### shop-api TOKEN TOKEN TOKEN ----------- OK OK OK --> from Header could get the token
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+
+#### Admin API --> TOKEN TOKEN TOKEN ---- OK OK OK
+POST http://192.168.0.53:3000/admin-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"superadmin\", password: \"superadmin\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK
+
+
+
+1️⃣ 查询订单状态 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+http
+### 查询订单状态 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state } }",
+  "variables": {
+    "code": "S1RB37BF252H6R3D"
+  }
+}
+
+###
+
+
+2️⃣ 转换订单状态为 ArrangingPayment
+http
+### 转换订单状态为 ArrangingPayment  / AddingItems / PaymentSettled
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation TransitionOrder($state: String!) { transitionOrderToState(state: $state) { ... on Order { id code state } ... on OrderStateTransitionError { message } } }",
+  "variables": {
+    "state": "PaymentSettled"
+  }
+}
+
+###
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###
+GET /v1/status HTTP/1.1
+Host: api-sandbox.nowpayments.io
+
+###
+
+GET /v1/currencies HTTP/1.1
+Host: api-sandbox.nowpayments.io
+x-api-key: NXWTNNZ-PRCM6PY-KXJAFTX-58X8WBH
+
+###
+
+
+
+###
+
+
+###
+
+
+###
+
+
+###
+
+
+###
+
+
+###

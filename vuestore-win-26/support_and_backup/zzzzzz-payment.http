@@ -1,0 +1,106 @@
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+@shop_token=4fb3769407def2e59872edf4a2be566d45870d53eba1996d0eb95ea48831d04e
+
+@orderCode=XEMWCGHYH14ZTV37
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK OK OK
+
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query { activeOrder { id code state totalWithTax lines { id productVariant { name } quantity } payments { id method state amount transactionId }  shippingLines { id priceWithTax shippingMethod { id code name description } } } }"
+}
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation TransitionOrder($state: String!) { transitionOrderToState(state: $state) { ... on Order { id code state } ... on OrderStateTransitionError { message } } }",
+  "variables": {
+    "state": "ArrangingPayment"
+  }
+}
+
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation AddPaymentToOrder($input: PaymentInput!) { addPaymentToOrder(input: $input) { __typename ... on Order { payments { id state method metadata } } ... on ErrorResult { errorCode message } } }",
+  "variables": {
+    "input": {
+      "method": "nowpayments_auth",
+      "metadata": {}
+    }
+  }
+}
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+
+
+######################### NowPayments Gemini 部分支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+### Test a partial payment of $10.00
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "mutation InitiateCustomPayment($amount: Int) { initiateNowPaymentsPayment(amount: $amount) }",
+    "variables": {
+        "amount": 10000
+    }
+}
+
+######################### NowPayments Gemini 部分支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+######################### NowPayments Gemini 全部支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+### Test a partial payment of $10.00
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "mutation { initiateNowPaymentsPayment }"
+}
+
+######################### NowPayments Gemini 全部支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+

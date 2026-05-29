@@ -1,0 +1,193 @@
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+
+{
+  "query": "mutation Login { authenticate(input: { native: { username: \"tprice@163.com\", password: \"tttttttt\" } }) { ... on CurrentUser { id identifier } } }"
+}
+
+###############################################  Shop TOKEN TOKEN TOKEN OK OK OK
+
+@shop_token=c86b4e60f12c7c586363212a720415a142039c039eb99af6cfee439279586924
+
+@orderCode=XEMWCGHYH14ZTV37
+
+###############################################  TOKEN TOKEN TOKEN OK OK OK OK OK
+
+# --- Variables (EDIT THESE) ---
+@host = http://192.168.0.53:3000
+@orderCode = 3NUYZ9CWLVG2X5TY
+@webhookReference = b07175ff
+@fakeSignature = "this-is-ignored-but-header-must-be-present"
+@realSignature = "cac0c0f92b6d1050b3c9f97e6e6d4a61633712b73068fa9437e653af80154694d69836588c6240d38abe246da909c7a6b78d0ccfc370eee92ef1e39e93780e66"
+
+
+###############################################  webhook Simple 简单版本 OK OK OK OK OK
+
+POST {{host}}/nowpayments/webhook
+Content-Type: application/json
+x-nowpayments-sig: cac0c0f92b6d1050b3c9f97e6e6d4a61633712b73068fa9437e653af80154694d69836588c6240d38abe246da909c7a6b78d0ccfc370eee92ef1e39e93780e66
+
+{"order_description":"Payment for order GAVFHEAWJ9M1W7YT | ref:ba0bf95a","order_id":"GAVFHEAWJ9M1W7YT","payment_status":"finished"}
+
+###
+
+< ./gen.json
+###
+
+{"order_description": "Payment for order GAVFHEAWJ9M1W7YT | ref:ba0bf95a","order_id": "GAVFHEAWJ9M1W7YT","payment_status": "finished"}
+###
+
+< ./gen.json
+
+####
+
+
+
+
+###
+
+< ./gen.json
+
+
+##### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+POST {{host}}/nowpayments/webhook
+Content-Type: application/json
+x-nowpayments-sig: {{fakeSignature}}
+
+{
+    "order_id": "{{orderCode}}",
+    "payment_status": "finished",
+    "order_description": "Payment for order {{orderCode}} | ref:{{webhookReference}}"
+}
+
+
+###############################################  webhook Simple 简单版本 OK OK OK OK OK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################# 订单号 查询 订单 ~ OK OK OK ~ OK OK OK OK OK
+# 1️⃣ 查询订单状态 ~~~~~~~~~~~~~~~~~~~~~~~~~~~ OK OK OK  
+# "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state } }",
+# A6D6YNFD9TCCW4AN
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query GetOrder($code: String!) { orderByCode(code: $code) { id code state totalWithTax lines { id productVariant { id name sku } quantity linePriceWithTax } payments { id method state amount transactionId } shippingLines { id priceWithTax shippingMethod { id code name description } } } }",
+  "variables": {
+    "code": "WY1AK3G8SP2UUQTH"
+  }
+}
+
+################################# 订单号 查询 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+
+
+
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "query { activeOrder { id code state totalWithTax lines { id productVariant { name } quantity } payments { id method state amount transactionId }  shippingLines { id priceWithTax shippingMethod { id code name description } } } }"
+}
+
+
+################################# 查询 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation TransitionOrder($state: String!) { transitionOrderToState(state: $state) { ... on Order { id code state } ... on OrderStateTransitionError { message } } }",
+  "variables": {
+    "state": "ArrangingPayment"
+  }
+}
+
+### 2️⃣ 转换 Active 订单 ArrangingPayment  / AddingItems / PaymentSettled ~ OK 
+#################################  转换 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+  "query": "mutation AddPaymentToOrder($input: PaymentInput!) { addPaymentToOrder(input: $input) { __typename ... on Order { payments { id state method metadata } } ... on ErrorResult { errorCode message } } }",
+  "variables": {
+    "input": {
+      "method": "nowpayments_auth",
+      "metadata": {}
+    }
+  }
+}
+
+#################################  用 NowPayments Auth 40% 付款 ## OK OK OK OK
+
+
+
+######################### NowPayments Gemini 部分支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+### Test a partial payment of $10.00
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "mutation InitiateCustomPayment($amount: Int) { initiateNowPaymentsPayment(amount: $amount) }",
+    "variables": {
+        "amount": 10000
+    }
+}
+
+######################### NowPayments Gemini 部分支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+
+
+######################### NowPayments Gemini 全部支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+### Test a partial payment of $10.00
+POST http://192.168.0.53:3000/shop-api
+Content-Type: application/json
+Authorization: Bearer {{shop_token}}
+
+{
+    "query": "mutation { initiateNowPaymentsPayment }"
+}
+
+######################### NowPayments Gemini 全部支付 Active 订单 ~ OK OK OK ~ OK OK OK OK OK
+
+

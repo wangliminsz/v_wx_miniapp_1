@@ -1,0 +1,31 @@
+##############################
+###   How to upload file to vendure
+
+
+POST http://192.168.0.53:3000/shop-api
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="operations"
+
+{ 
+  "query": "mutation ($file: Upload!) { uploadCustomerFile(file: $file) { id name preview source } }", 
+  "variables": { "file": null } 
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="map"
+
+{ "0": ["variables.file"] }
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="0"; filename="logo-48-48.png"
+Content-Type: image/png
+
+< /home/coding/vuestore-trae/public/logo-48-48.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+###   How to upload file to vendure
+##############################
+
+
+

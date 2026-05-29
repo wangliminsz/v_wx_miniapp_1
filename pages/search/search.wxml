@@ -1,4 +1,12 @@
-<view wx:if="{{isLogin == true}}" class="container">
+<!-- 加载状态 -->
+<view wx:if="{{isLoading}}" class="loading-overlay">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+</view>
+
+<view wx:elif="{{isLogin == true}}" class="container">
   <!-- 搜索框 -->
   <view class="search-bar">
     <view class="search-input-wrapper">

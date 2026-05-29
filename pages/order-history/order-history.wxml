@@ -38,8 +38,18 @@
         </view>
         
         <view class="order-content">
-          <text class="order-items">{{item.productNames}}</text>
-          <text class="order-count">{{item.itemCount}} kg</text>
+          <view class="order-line" wx:for="{{item.formattedLines}}" wx:for-item="line" wx:for-index="lineIndex" wx:key="lineIndex">
+            <text class="order-items">{{line.productVariant.name}}</text>
+            <view class="line-info">
+              <text class="order-count">{{line.formattedUnitPrice}}</text>
+              <text class="order-count">*</text>
+              <text class="order-count">{{line.quantity}} kg</text>
+              
+            </view>
+          </view>
+          <view class="shipping-info">
+            <text class="order-count">运费: {{item.formattedShipping}}</text>
+          </view>
         </view>
 
         <view class="order-footer">

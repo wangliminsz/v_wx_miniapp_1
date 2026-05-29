@@ -1,0 +1,63 @@
+/* @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"); */
+@import url("https://fonts.css.network/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.sf-button__badge {
+  display: none !important;
+}
+
+.cart-badge {
+  @apply absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] px-0.5 py-0 !min-w-[8px] !min-h-[8px] flex items-center justify-center rounded-full leading-none;
+}
+
+.orders-badge {
+  @apply absolute -top-0.5 -right-0.5 text-white text-[8px] px-0.5 py-0 !min-w-[8px] !min-h-[8px] flex items-center justify-center rounded-full leading-none;
+  background-color: #3b82f6 !important;
+}
+
+@layer base {
+  html {
+    font-family: "Open Sans", system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-slate-50;
+  }
+}
+
+@layer components {
+  .animate-dropIn {
+    animation: dropIn 0.5s ease-out;
+  }
+
+  @keyframes dropIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Clean, minimal animations for professional feel */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+
+}

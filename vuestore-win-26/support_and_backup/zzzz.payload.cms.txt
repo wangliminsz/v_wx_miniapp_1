@@ -1,0 +1,657 @@
+(Link from Product Page → Full Article in Blog)
+
+Product page (Vendure-powered): Clean, commerce-focused, short teaser + link
+→ "Full story" button/link
+Blog / Article page (Payload-powered): Full long-form story, images, rich formatting
+→ Lives under /blog/[slug] or /articles/[slug]
+
+This keeps the product page fast/lightweight and gives the full storytelling experience in a dedicated blog-style page.
+Recommended Implementation (Vue 3 Storefront)
+1. Product Detail Page – Add Link Only
+In your product page component (e.g. ProductDetail.vue):
+vue<template>
+  <div class="product-page">
+    <!-- Your existing Vendure commerce content -->
+    <h1>{{ product.name }}</h1>
+    <p class="price">฿{{ formatPrice(product.variants[0].price) }}</p>
+    <!-- ... variants, add to cart, images ... -->
+
+    <!-- Teaser + Link to full story -->
+    <div class="story-teaser mt-8 border-t pt-6">
+      <h3 class="text-xl font-semibold mb-3">Discover the Full Story</h3>
+      <p class="text-gray-600 mb-4">
+        Learn why this laptop is perfect for students, its battery life secrets, and more...
+      </p>
+
+      <router-link
+        :to="`/blog/${product.slug}`"
+        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      >
+        Read the Full Article
+        <ArrowRightIcon class="ml-2 w-5 h-5" />
+      </router-link>
+    </div>
+  </div>
+</template>
+→ This keeps the product page clean and focused on buying.
+2. Create Blog/Article Page – Fetch from Payload by Product Slug or ID
+Create a new page/route: /blog/[slug].vue
+vue<!-- pages/blog/[slug].vue -->
+<template>
+  <div class="blog-article container mx-auto px-4 py-12 max-w-4xl">
+    <!-- Loading state -->
+    <div v-if="loading" class="text-center py-20">Loading story...</div>
+
+    <!-- Not found -->
+    <div v-else-if="!article" class="text-center py-20">
+      <h2 class="text-2xl">Story not found</h2>
+      <p class="mt-4">This product story is still being prepared.</p>
+    </div>
+
+    <!-- Full article -->
+    <article v-else>
+      <h1 class="text-4xl font-bold mb-6">{{ article.name }}</h1>
+
+      <!-- Hero image -->
+      <img
+        v-if="article.heroImage?.url"
+        :src="article.heroImage.url"
+        :alt="article.name"
+        class="w-full h-auto rounded-xl shadow-lg mb-10 object-cover"
+      />
+
+      <!-- Rich content -->
+      <div
+        v-if="article.richDescription?.html"
+        class="prose prose-lg prose-blue max-w-none"
+        v-html="article.richDescription.html"
+      ></div>
+
+      <!-- Gallery of additional images -->
+      <div v-if="article.storyImages?.length" class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div v-for="item in article.storyImages" :key="item.image.id">
+          <img
+            :src="item.image.url"
+            :alt="item.caption || article.name"
+            class="w-full h-auto rounded-lg shadow"
+          />
+          <p v-if="item.caption" class="text-center text-sm text-gray-600 mt-2">
+            {{ item.caption }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Back button -->
+      <div class="mt-12 text-center">
+        <router-link to="/products" class="text-blue-600 hover:underline">
+          ← Back to Products
+        </router-link>
+      </div>
+    </article>
+  </div>
+</template>
+
+<script setup>
+const route = useRoute()
+const slug = route.params.slug
+const loading = ref(true)
+const article = ref(null)
+
+try {
+  // Fetch by slug (most reliable & SEO-friendly)
+  const response = await $fetch(`/api/vendure-product`, {
+    query: {
+      where: { slug: { equals: slug } },
+      limit: 1,
+      depth: 2,           // Get full relations (heroImage, storyImages)
+      draft: false
+    }
+  })
+
+  article.value = response.docs?.[0] || null
+} catch (err) {
+  console.error('Failed to load story:', err)
+} finally {
+  loading.value = false
+}
+</script>
+
+<style>
+.prose img {
+  @apply rounded-lg shadow-md my-6;
+}
+</style>
+Key Points in the Code Above
+
+Uses slug in URL (/blog/laptop) — beautiful, SEO-friendly, shareable
+Fetches the exact product by slug (same as Vendure product slug)
+depth=2 → gets full media objects (urls, sizes) for images
+Mobile-friendly: prose class (from Tailwind Typography) makes rich text look great on small screens
+Fallbacks: loading state + not-found message
+
+
+
+Bonus: Alternative Fetch by ID (if you prefer)
+If you ever want to use ID instead of slug:
+TypeScriptconst productIdFromVendure = 1  // from Vendure data
+const response = await $fetch(`/api/vendure-product/${productIdFromVendure}`, {
+  query: { depth: 2, draft: false }
+})
+But slug is better for URLs.
+Final Result
+
+Product page: short, fast, only commerce + nice "Read the Full Article" button
+/blog/laptop: full beautiful story, hero image, gallery, rich text — perfect for mobile reading
+
+This is very professional — many modern e-commerce sites (especially in fashion/tech) use this exact pattern.
+Try it with your "Laptop" product:
+
+Add some content in Payload (as in previous message)
+Add the link on product page
+Create the /blog/[slug].vue file
+Visit /blog/laptop → magic!
+
+If you run into any fetch error or styling issue, just send the console log or screenshot — I'll fix it instantly.
+You're building something really nice — keep going! 🚀
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+from Payload Admin Dashboard:
+
+/api/vendure-product/1?depth=2&draft=false&locale=undefined&trash=false
+
+
+
+{
+"id": "1",
+"name": "Laptop",
+"slug": "laptop",
+
+"productVariants": [],
+
+"richDescription": {
+
+"root": {
+"type": "root",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "# Why Choose the Laptop?",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Perfect for students, professionals, and everyday use.",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "## Lightning Fast Performance",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Equipped with the latest Intel Core processor and 8GB RAM, this laptop handles multitasking with ease — from writing reports to streaming videos.",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "## All-Day Battery Life",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Up to 10 hours on a single charge. Take it to class, café, or travel without worrying about the charger.",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "## Stunning Display",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "13-inch Full HD screen with vibrant colors and sharp details. Great for watching movies or editing photos.",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "## Lightweight & Portable",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Only 1.3 kg — slips easily into your backpack.",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Ready to boost your productivity? ",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+},
+
+{
+"type": "paragraph",
+"format": "",
+"indent": 0,
+"version": 1,
+
+"children": [
+
+{
+"mode": "normal",
+"text": "Add to cart now and enjoy free shipping!",
+"type": "text",
+"style": "",
+"detail": 0,
+"format": 0,
+"version": 1
+}
+],
+"direction": null,
+"textStyle": "",
+"textFormat": 0
+}
+],
+"direction": null
+}
+},
+
+"heroImage": {
+"id": 5,
+"alt": "草原树木",
+"updatedAt": "2026-01-17T03:52:02.697Z",
+"createdAt": "2026-01-17T03:52:01.386Z",
+"url": "http://localhost:3000/api/media/file/ven29.jpg",
+"thumbnailURL": "http://localhost:3000/api/media/file/ven29-400x300.webp",
+"filename": "ven29.jpg",
+"mimeType": "image/jpeg",
+"filesize": 126368,
+"width": 1024,
+"height": 607,
+"focalX": 50,
+"focalY": 50,
+
+"sizes": {
+
+"thumbnail": {
+"url": "http://localhost:3000/api/media/file/ven29-400x300.webp",
+"width": 400,
+"height": 300,
+"mimeType": "image/webp",
+"filesize": 21922,
+"filename": "ven29-400x300.webp"
+},
+
+"card": {
+"url": "http://localhost:3000/api/media/file/ven29-768x432.jpg",
+"width": 768,
+"height": 432,
+"mimeType": "image/jpeg",
+"filesize": 66567,
+"filename": "ven29-768x432.jpg"
+},
+
+"tablet": {
+"url": "http://localhost:3000/api/media/file/ven29-1024x607.jpg",
+"width": 1024,
+"height": 607,
+"mimeType": "image/jpeg",
+"filesize": 125351,
+"filename": "ven29-1024x607.jpg"
+},
+
+"full": {
+"url": "http://localhost:3000/api/media/file/ven29-1024x607.jpg",
+"width": 1024,
+"height": 607,
+"mimeType": "image/jpeg",
+"filesize": 125351,
+"filename": "ven29-1024x607.jpg"
+}
+}
+},
+
+"storyImages": [
+
+{
+"id": "696b73e62689e037862ecab1",
+
+"image": {
+"id": 4,
+"alt": "草原绿色",
+"updatedAt": "2026-01-16T23:13:23.192Z",
+"createdAt": "2026-01-16T23:13:22.044Z",
+"url": "http://localhost:3000/api/media/file/ven05.jpg",
+"thumbnailURL": "http://localhost:3000/api/media/file/ven05-400x300.webp",
+"filename": "ven05.jpg",
+"mimeType": "image/jpeg",
+"filesize": 96854,
+"width": 1024,
+"height": 686,
+"focalX": 50,
+"focalY": 50,
+
+"sizes": {
+
+"thumbnail": {
+"url": "http://localhost:3000/api/media/file/ven05-400x300.webp",
+"width": 400,
+"height": 300,
+"mimeType": "image/webp",
+"filesize": 17366,
+"filename": "ven05-400x300.webp"
+},
+
+"card": {
+"url": "http://localhost:3000/api/media/file/ven05-768x432.jpg",
+"width": 768,
+"height": 432,
+"mimeType": "image/jpeg",
+"filesize": 49962,
+"filename": "ven05-768x432.jpg"
+},
+
+"tablet": {
+"url": "http://localhost:3000/api/media/file/ven05-1024x686.jpg",
+"width": 1024,
+"height": 686,
+"mimeType": "image/jpeg",
+"filesize": 89577,
+"filename": "ven05-1024x686.jpg"
+},
+
+"full": {
+"url": "http://localhost:3000/api/media/file/ven05-1024x686.jpg",
+"width": 1024,
+"height": 686,
+"mimeType": "image/jpeg",
+"filesize": 89577,
+"filename": "ven05-1024x686.jpg"
+}
+}
+},
+"caption": null
+}
+],
+"status": "published",
+"updatedAt": "2026-01-17T11:35:29.247Z",
+"createdAt": "2026-01-17T09:11:24.668Z"
+}

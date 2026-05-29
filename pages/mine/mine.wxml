@@ -53,7 +53,7 @@
   <view class="btn-group">
     <!-- <button class="btn-primary" bindtap="updateUserInfo2">注册/更新</button> -->
     <button class="btn-primary" bindtap="updateUserInfo2">
-      {{isLogin ? '更新资料' : '用户注册'}}
+      {{isLogin ? '更新信息' : '用户注册'}}
     </button>
     <!-- url="/pages/order-history/order-history" -->
     <button class="btn-order-history" bindtap="goToOrderHistory" hover-class="btn-order-history-active">订单历史</button>

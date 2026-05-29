@@ -24,11 +24,19 @@ Page({
     showBackToTop: false,
     scrollTop: 0,
     isLogin: false,
+    isLoading: true,
   },
 
-  onLoad() {
+  async onLoad() {
     console.log('========== Search Page Loaded ==========');
-    this.setData({ isLogin: app.globalData.isLogin });
+    await app.initPromise;
+    await app.loginPromise;
+    
+    this.setData({ 
+      isLogin: app.globalData.isLogin,
+      isLoading: false 
+    });
+    
     if (app.globalData.isLogin) {
       this.loadSearchHistory();
     }

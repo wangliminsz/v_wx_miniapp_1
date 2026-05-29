@@ -1,7 +1,28 @@
-<block wx:if="{{isLogin}}">
+<!-- 原生风格自定义导航栏 -->
+<view class="nav-bar" style="padding-top: {{safeAreaTop}}px;">
+  <view class="nav-bar-inner">
+    <view class="nav-bar-left" bindtap="onNavBack">
+        <view class="nav-back-icon"></view>
+      </view>
+    <view class="nav-bar-center">
+      <text class="nav-bar-title">采购车</text>
+    </view>
+    <view class="nav-bar-right"></view>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view wx:if="{{isLoading}}" class="loading-overlay">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+</view>
+
+<block wx:elif="{{isLogin}}">
 
   <!-- EMPTY CART → NOW OUTSIDE, CAN ALIGN PERFECTLY -->
-  <view class="empty-state" wx:if="{{cartItems.length === 0 && !isLoading}}">
+  <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
 
     <view class="empty-icon-wrap">
       <text class="empty-icon-text">🛒</text>
@@ -14,23 +35,13 @@
   </view>
 
   <!-- NORMAL CONTENT -->
-  <view class="container" wx:elif="{{cartItems.length > 0}}">
+  <view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:elif="{{cartItems.length > 0}}">
 
 
     <!-- 同步状态提示 -->
     <view wx:if="{{syncStatus}}" class="sync-status">
       <text class="sync-text">{{syncStatus}}</text>
     </view>
-
-    <!-- 加载状态 -->
-    <view wx:if="{{isLoading}}" class="loading-overlay">
-      <view class="loading-content">
-        <view class="loading-spinner"></view>
-        <text class="loading-text">加载中...</text>
-      </view>
-    </view>
-
-    <!-- {{cartItems.length > 0}} -->
 
     <!-- 采购车列表 -->
     <view class="cart-list" wx:if="{{cartItems.length > 0}}">
@@ -52,11 +63,16 @@
             <view class="quantity-btn minus" bindtap="onMinus" data-index="{{index}}">
               <text>-</text>
             </view>
-            <input type="number" class="quantity-input" value="{{item.quantity}}" bindchange="onQuantityChange" data-index="{{index}}" />
+            <view class="quantity-input-wrap">
+              <input type="number" class="quantity-input" value="{{item.quantity}}" bindchange="onQuantityChange" data-index="{{index}}" />
+              <text class="quantity-unit">kg</text>
+            </view>
             <view class="quantity-btn plus" bindtap="onPlus" data-index="{{index}}">
               <text>+</text>
             </view>
           </view>
+          <!-- 小计 -->
+          <text class="item-line-total">¥ {{item.lineTotal}}</text>
         </view>
 
         <!-- 删除按钮 -->
@@ -88,16 +104,19 @@
 
 </block>
 
+<block wx:else>
+  <view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;">
 
-<view wx:else class="container">
-  <view class="login-prompt">
-    <view class="login-icon-wrap">
-      <text class="login-icon-text">🔒</text>
+    <view class="login-prompt">
+      <view class="login-icon-wrap">
+        <text class="login-icon-text">🔒</text>
+      </view>
+      <text class="login-title">暂未登录</text>
+      <text class="login-desc">登录后即可加入采购车</text>
+      <navigator url="/pages/mine/mine" open-type="switchTab" class="login-btn" hover-class="login-btn-active">
+        <text>去登录</text>
+      </navigator>
     </view>
-    <text class="login-title">暂未登录</text>
-    <text class="login-desc">登录后即可加入采购车</text>
-    <navigator url="/pages/mine/mine" open-type="switchTab" class="login-btn" hover-class="login-btn-active">
-      <text>去登录</text>
-    </navigator>
+
   </view>
-</view>
+</block>

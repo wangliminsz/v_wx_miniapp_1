@@ -38,8 +38,10 @@ Page({
                 totalWithTax
                 currencyCode
                 createdAt
+                shippingWithTax
                 lines {
                   quantity
+                  unitPriceWithTax
                   productVariant {
                     name
                     sku
@@ -63,10 +65,15 @@ Page({
       const formattedOrders = filtered.map(order => ({
         ...order,
         formattedTotal: this.formatPrice(order.totalWithTax, order.currencyCode),
+        formattedShipping: this.formatPrice(order.shippingWithTax, order.currencyCode),
         formattedDate: this.formatDate(order.createdAt),
         stateLabel: this.getStateLabel(order.state),
         itemCount: order.lines.reduce((sum, line) => sum + line.quantity, 0),
-        productNames: order.lines.map(line => line.productVariant.name).join(', ')
+        productNames: order.lines.map(line => line.productVariant.name).join(', '),
+        formattedLines: order.lines.map(line => ({
+          ...line,
+          formattedUnitPrice: this.formatPrice(line.unitPriceWithTax, order.currencyCode)
+        }))
       }));
 
       formattedOrders.sort((a, b) => {
@@ -75,10 +82,8 @@ Page({
           : new Date(a.createdAt) - new Date(b.createdAt);
       });
 
-      this.setData({ 
-        orders: formattedOrders,
-        filteredOrders: formattedOrders
-      });
+      this.setData({ orders: formattedOrders });
+      this.applyFilter();
     } catch (error) {
       console.error('加载订单失败:', error);
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -115,10 +120,8 @@ Page({
     return stateMap[state] || state;
   },
 
-  onFilterTap(e) {
-    const key = e.currentTarget.dataset.key;
-    this.setData({ currentFilter: key });
-    
+  applyFilter() {
+    const key = this.data.currentFilter;
     if (key === 'all') {
       this.setData({ filteredOrders: this.data.orders });
     } else if (key === 'PaymentSettled') {
@@ -130,6 +133,12 @@ Page({
       const filtered = this.data.orders.filter(order => order.state === key);
       this.setData({ filteredOrders: filtered });
     }
+  },
+
+  onFilterTap(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ currentFilter: key });
+    this.applyFilter();
   },
 
   toggleSortOrder() {

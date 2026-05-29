@@ -1,0 +1,203 @@
+### 配置全局变量（根据你的 vendure-config.ts 配置）
+@baseUrl = http://192.168.0.51:3000/shop-api
+
+
+#################################################
+
+
+
+POST {{baseUrl}}
+Content-Type: application/json
+X-Request-Type: GraphQL
+
+mutation AuthenticateWithWechat($openId: String!, $nickname: String, $lastName: String, $phoneNumber: String) {
+  authenticate(input: {
+    wechat: {
+      openId: $openId,
+      nickname: $nickname,
+      lastName: $lastName,
+      phoneNumber: $phoneNumber
+    }
+  }) {
+    ... on CurrentUser {
+      id
+      identifier
+    }
+  }
+}
+
+{
+  "openId": "ojaJ13YlqeIniIi0fOLtcHGf_test_03",
+  "nickname": "耶律大石",
+  "lastName": "山西晋中太谷喷涂公司",
+  "phoneNumber": "13800138000"
+}
+
+
+
+
+
+
+#################################################
+
+
+POST {{baseUrl}}
+Content-Type: application/json
+X-Request-Type: GraphQL
+
+mutation AuthenticateWithWechat {
+  authenticate(input: {
+    wechat: {
+      openId: "ojaJ13YlqeIniIi0fOLtcHGf_e74",
+      nickname: "耶律大石"
+    }
+  }) {
+    ... on CurrentUser {
+      id
+      identifier
+    }
+    ... on ErrorResult {
+      errorCode
+      message
+    }
+  }
+}
+
+### 传入你想测试的不同用户的 OpenId 和 昵称
+{
+  "openId": "ojaJ13YlqeIniIi0fOLtcHGf_e74",
+  "nickname": "Daisy Chan"
+}
+
+
+
+
+
+#################################################
+
+
+
+
+
+
+
+
+POST {{baseUrl}}
+Content-Type: application/json
+X-Request-Type: GraphQL
+
+# 注意：去掉了里面的 ($openId: String!)
+mutation AuthenticateWithWechat {
+  authenticate(input: {
+    wechat: {
+      openId: "ojaJ13YlqeIniIi0fOLtcHGf_e74"
+    }
+  }) {
+    ... on CurrentUser {
+      id
+      identifier
+    }
+    ... on ErrorResult {
+      errorCode
+      message
+    }
+  }
+}
+
+
+
+#################################################
+
+POST {{baseUrl}}
+Content-Type: application/json
+X-Request-Type: GraphQL
+
+mutation AuthenticateWithWechat($openId: String!) {
+  authenticate(input: {
+    wechat: {
+      openId: "ojaJ13YlqeIniIi0fOLtcHGf_e74"
+    }
+  }) {
+    ... on CurrentUser {
+      id
+      identifier
+    }
+    ... on ErrorResult {
+      errorCode
+      message
+    }
+  }
+}
+
+### 这里就是你传入 openId 的地方（请求体的一部分）
+{
+  "openId": "oUpwI5t_Xxxxxxx_MockOpenId2026"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####
+
+POST https://bkkapi.favor100.site/api/checkLoginStatus
+
+
+#####
+
+
+POST https://bkkapi.favor100.site/api/checkArkLoginStatus
+
+#####
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Get Category List for ColorBook
+GET https://m.tu-bo.com/api/applet/colorBook/getCategoryList
+Language: zh_CN
+Tubo-Sign: 21a344b1df1b04c3fa52af117e1e40c9
+Authorization: 2609a5c1a5e84117be16ad8997b2747d
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
+Content-Type: application/json
+Accept: */*
+Referer: https://servicewechat.com/wx245884ef5eb4d961/40/page-frame.html
+
+###
+
+POST https://m.tu-bo.com/api/applet/colorBook/queryColorBook
+Language: zh_CN
+Tubo-Sign: 8cd0f38ba544a3abf5a879cec6397b6f
+Authorization: 2609a5c1a5e84117be16ad8997b2747d
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254186b) XWEB/19481
+xweb_xhr: 1
+Content-Type: application/json
+Accept: */*
+Sec-Fetch-Site: cross-site
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: https://servicewechat.com/wx245884ef5eb4d961/40/page-frame.html
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9
+
+{"keyWord":"","pageNo":4,"pageSize":20,"colorBookCategoryId":"11"}
+
+###

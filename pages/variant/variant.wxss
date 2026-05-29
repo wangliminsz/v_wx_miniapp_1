@@ -350,14 +350,27 @@
   border-radius: 0 16rpx 16rpx 0;
 }
 
+.quantity-input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  min-width: 180rpx;
+}
+
 .quantity-input {
-  width: 100rpx;
+  width: 120rpx;
   text-align: center;
   font-size: 28rpx;
   color: #1D2129;
   padding: 0;
   background: transparent;
   border: none;
+}
+
+.quantity-unit {
+  font-size: 24rpx;
+  color: #86909C;
+  margin-left: 8rpx;
 }
 
 /* ========== 底部固定操作栏 ========== */
@@ -873,14 +886,27 @@
   border-radius: 0 8px 8px 0;
 }
 
+.quantity-input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  min-width: 180rpx;
+}
+
 .quantity-input {
-  width: 100rpx;
+  width: 120rpx;
   text-align: center;
   font-size: 14px;
   color: #1D2129;
   padding: 0;
   background: transparent;
   border: none;
+}
+
+.quantity-unit {
+  font-size: 12px;
+  color: #86909C;
+  margin-left: 8rpx;
 }
 
 /* ========== 底部固定操作栏 ========== */

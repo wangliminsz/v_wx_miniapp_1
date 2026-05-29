@@ -17,7 +17,8 @@ Page({
     selectedInvoiceAddressId: '',
     selectedInvoiceIndex: 0,
     invoiceAddress: null,
-    hasInvoiceAddress: false
+    hasInvoiceAddress: false,
+    isLogin: false,
   },
 
   onLoad() {
@@ -570,20 +571,15 @@ Page({
         icon: 'success',
         duration: 2500
       })
-      
-      setTimeout(() => {
-        // // 跳普通页面
-        // wx.navigateTo({
-        //   url: '/pages/order-history/order-history'
-        // })
-      
-        // // 如果是底部tab页，用下面这句，注释上面那句
-        wx.switchTab({
-          url: '/pages/home/home'
-        })
-      }, 1500)
 
+      // wx.switchTab({
+      //   url: '/pages/home/home'
+      // })
 
+      wx.navigateTo({
+        url: '/pages/order-history/order-history'
+      })
+      
 
 
     } catch (error) {
