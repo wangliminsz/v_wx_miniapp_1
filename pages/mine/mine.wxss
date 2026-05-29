@@ -1,0 +1,263 @@
+/* 全局容器：宽松背景 + 安全边距 */
+.page-container {
+  /* min-height: calc(100vh - 120rpx); */
+  min-height: 100vh;
+  background: #F7F8FA;
+  padding: 0 32rpx 0rpx; /* 左右16px规范边距，rpx适配 */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 加载覆盖层 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #F7F8FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #E5E6EB;
+  border-top-color: #165DFF;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #86909C;
+}
+
+/* 用户信息卡片：严格对齐设计规范 */
+.user-card {
+  width: 100%;
+  max-width: 680rpx;
+  background: #fff;
+  border-radius: 16rpx; /* 规范8px圆角，rpx适配 */
+  padding-top: 64rpx; /* 规范内边距 */
+  padding-bottom: 64rpx; /* 规范内边距 */
+  padding-left: 64rpx; /* 规范内边距 */
+  padding-right: 64rpx; /* 规范内边距 */
+  margin-bottom: 48rpx; /* 卡片和按钮间距，8px倍数 */
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08); /* 规范阴影 */
+  border: 1rpx solid #F2F3F5; /* 规范边框 */
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+/* 头像：规范尺寸 */
+.avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  margin-right: 24rpx; /* 规范间距 */
+  background: #E5E6EB;
+  border: 1rpx solid #F2F3F5;
+}
+
+/* 用户文字区域：分层展示，行高宽松 */
+.user-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx; /* 规范间距 */
+}
+
+/* 昵称：主标题层级 24px */
+.user-nickname {
+  font-size: 36rpx; /* 对应24px，rpx适配 */
+  font-weight: 700;
+  color: #1D2129;
+  line-height: 1.4;
+}
+.user-nickname.placeholder {
+  color: #86909C;
+  font-weight: 500;
+}
+
+/* 姓名：次级信息层级 16px */
+.user-name {
+  font-size: 30rpx; /* 对应16px */
+  color: #4E5969;
+  line-height: 1.4;
+}
+
+/* 手机号：辅助信息层级 14px */
+.user-phone {
+  font-size: 30rpx; /* 对应14px */
+  color: #4E5969;
+  line-height: 1.4;
+}
+
+/* Vendure注册状态：规范样式 */
+.vendure-status {
+  font-size: 28rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 8rpx;
+  text-align: center;
+  font-weight: 500;
+}
+
+.vendure-status.registered {
+  color: #00B42A;
+  /* background-color: #E6FFEF; */
+}
+
+.vendure-status.unregistered {
+  color: #86909C;
+  /* background-color: #FFF7E8; */
+}
+
+/* 按钮组：居中布局 + 规范间距 */
+.btn-group {
+  width: 100%;
+  max-width: 520rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx; /* 规范间距 */
+  margin-top: 64rpx; /* 按钮和协议间距 */
+  margin-bottom: 64rpx; /* 按钮和协议间距 */
+}
+
+/* 地址管理按钮：改用主色工业蓝，和注册按钮统一，视觉更协调 */
+.btn-address {
+  height: 88rpx; /* 远超44px规范，点击友好 */
+  background: #165DFF;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 32rpx; /* 对应16px正文 */
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2rpx 8rpx rgba(22, 93, 255, 0.15);
+}
+
+
+/* 订单历史按钮 */
+.btn-order-history {
+  height: 88rpx;
+  background: #fff;
+  color: #165DFF;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: none;
+  box-shadow: 0 2rpx 8rpx rgba(22, 93, 255, 0.15);
+}
+
+.btn-order-history-active {
+  opacity: 0.85;
+}
+
+
+
+
+/* 主按钮：规范样式 */
+.btn-primary {
+  height: 88rpx;
+  background: #165DFF;
+  color: #fff;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2rpx 8rpx rgba(22, 93, 255, 0.15);
+}
+
+/* 次要按钮：规范样式 */
+.btn-default {
+  height: 88rpx;
+  background: #fff;
+  color: #4E5969;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  border: 1rpx solid #E5E6EB;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+}
+
+
+/* 去除按钮默认样式 */
+.btn-primary::after,
+.btn-default::after,
+.btn-address::after {
+  border: none;
+}
+
+/* 底部协议：规范排版 */
+.agreement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx; /* 对应12px辅助文字 */
+  color: #86909C;
+  margin-top: auto; /* 自动顶到页面底部 */
+  margin-bottom: auto;
+}
+
+.line {
+  width: 1rpx;
+  height: 24rpx;
+  background: #C9CDD4;
+  margin: 0 20rpx;
+}
+
+.link {
+  color: #165DFF;
+}
+
+
+
+/* 新增：地址管理入口样式 */
+.address-entry {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 12rpx;
+  border-radius: 8rpx;
+  background-color: #F7F8FA;
+  transition: all 0.2s;
+  margin-top: 24rpx;
+}
+
+.address-entry:active {
+  background-color: #E5F0FF;
+  transform: scale(0.96);
+}
+
+.address-icon {
+  font-size: 24rpx; /* 符合图标24px规范 */
+  line-height: 1;
+}
+
+.address-text {
+  font-size: 28rpx; /* 辅助文字层级 */
+  color: #165DFF; /* 主色，和整体风格统一 */
+  font-weight: 500;
+  line-height: 1;
+}

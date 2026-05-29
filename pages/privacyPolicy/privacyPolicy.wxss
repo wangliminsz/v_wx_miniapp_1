@@ -1,0 +1,49 @@
+.container {
+  padding: 32rpx;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 48rpx;
+  padding-bottom: 32rpx;
+  border-bottom: 1rpx solid #F2F3F5;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1D2129;
+  margin-bottom: 12rpx;
+}
+
+.update-time {
+  display: block;
+  font-size: 24rpx;
+  color: #86909C;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 40rpx;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.section-text {
+  font-size: 28rpx;
+  color: #4E5969;
+  line-height: 1.7;
+}

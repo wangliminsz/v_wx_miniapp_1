@@ -1,0 +1,132 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view wx:elif="{{error}}" class="error-state">
+    <text class="error-icon">!</text>
+    <text class="error-text">{{error}}</text>
+    <button class="error-btn" bindtap="goBack">返回</button>
+  </view>
+
+
+  <view wx:elif="{{variant}}" class="variant-content">
+
+    <!-- 商品图片区 -->
+    <view class="product-images">
+      <view class="main-image-container">
+        <image wx:if="{{images.length > 0}}" src="{{images[currentImageIndex].preview}}" mode="aspectFit" class="main-image" lazy-load />
+        <view wx:else class="no-image">
+          <text>暂无图片</text>
+        </view>
+
+        <view wx:if="{{images.length > 1}}" class="image-nav">
+          <view class="nav-btn prev" bindtap="onPreviousImage">
+            <text class="nav-icon">‹</text>
+          </view>
+          <view class="nav-btn next" bindtap="onNextImage">
+            <text class="nav-icon">›</text>
+          </view>
+        </view>
+
+        <view wx:if="{{images.length > 1}}" class="image-indicator">
+          <text>{{currentImageIndex + 1}} / {{images.length}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{images.length > 1}}" class="thumbnail-list">
+        <view wx:for="{{images}}" wx:key="id" class="thumbnail-item {{currentImageIndex === index ? 'active' : ''}}" bindtap="onImageTap" data-index="{{index}}">
+          <image src="{{item.preview}}" mode="aspectFill" class="thumbnail-image" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 商品信息区 -->
+    <view class="product-info">
+      <view class="product-header">
+        <text class="product-name">{{variant.name}}</text>
+        <text class="product-subtitle">{{product.name}}</text>
+      </view>
+
+      <view class="flex justify-between">
+        <view class="price-section">
+          <text class="product-price">¥ {{variant.priceWithTax / 100}} 元/kg</text>
+        </view>
+
+        <!-- <view class="meta-section"> -->
+        <!-- {{variant.stockLevel}} -->
+          <!-- <text wx:if="{{variant.sku}}" class="product-sku">{{variant.sku}}</text> -->
+          <!-- <text class="stock-status {{getStockLevelClass(variant.stockLevel)}}"> -->
+            <!-- {{getStockLevelText(variant.stockLevel)}} -->
+          <!-- </text> -->
+        <!-- </view> -->
+      </view>
+
+      <view style="height:20px;"></view>
+ 
+
+      <view class="quantity-section">
+        <text class="quantity-label">采购数量 (kg)</text>
+        <view class="quantity-control">
+          <view class="quantity-btn minus" bindtap="onMinus">
+            <text>-</text>
+          </view>
+
+          <!-- ✅ 只显示数字，不要 input ✅ -->
+          <text class="quantity-input">{{quantity}}</text>
+
+          <view class="quantity-btn plus" bindtap="onPlus">
+            <text>+</text>
+          </view>
+        </view>
+      </view>
+
+
+
+      <view wx:if="{{product.description}}" class="product-description">
+        <text class="description-title">商品说明</text>
+        <rich-text nodes="{{product.description}}"></rich-text>
+      </view>
+
+      <view wx:if="{{techDocs.length > 0}}" class="docs-section">
+        <text class="docs-title">技术文档</text>
+        <view class="docs-list">
+          <view wx:for="{{techDocsWithIcons}}" wx:key="id" wx:for-index="index" class="file_icon-container" bindtap="downloadFile" data-url="{{item.preview}}" data-index="{{index}}">
+            <image src="{{item.icon}}" class="file_icon" mode="aspectFit"></image>
+            <text class="doc-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{addToCartError}}" class="error-tip">
+        <view class="error-tip-content">
+          <text class="error-tip-icon">!</text>
+          <text class="error-tip-text">{{addToCartError}}</text>
+        </view>
+        <view class="error-tip-close" bindtap="closeError">
+          <text>×</text>
+        </view>
+      </view>
+
+    </view>
+
+    <!-- 底部固定操作栏 -->
+    <view class="bottom-bar">
+      <view class="action-icons">
+        <view class="action-icon-item" bindtap="goHome">
+          <image src="/static/tabbar/home-n.png" mode="aspectFit"></image>
+        </view>
+        <view class="action-icon-item cart-icon" bindtap="goToCart">
+          <image src="/static/tabbar/cart-n.png" mode="aspectFit"></image>
+          <view wx:if="{{cartCount > 0}}" class="cart-badge">{{cartCount > 99 ? '99+' : cartCount}}</view>
+        </view>
+      </view>
+      <view class="action-buttons">
+        <button class="btn-add-cart" bindtap="addToCart" disabled="{{isAddingToCart || variant.stockLevel === 0 || !isLogin}}" loading="{{isAddingToCart}}">
+          {{!isLogin ? '请先登录' : (isAddingToCart ? '加入中...' : '加入采购车')}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

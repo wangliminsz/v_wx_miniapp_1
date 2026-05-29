@@ -1,0 +1,366 @@
+/* ==============================
+   全局规范：蓝橙主色调统一
+============================== */
+.container {
+  min-height: 100vh;
+  background-color: #F7F8FA;
+  padding-bottom: 140rpx;
+}
+
+/* 同步状态提示：橙色调，呼应主题 */
+.sync-status {
+  background-color: #FFF7E6;
+  padding: 20rpx 32rpx;
+  text-align: center;
+  border-bottom: 1rpx solid #FFE082;
+}
+.sync-text {
+  font-size: 26rpx;
+  color: #FF7D00;
+}
+
+/* 加载状态：主色蓝 */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+}
+.loading-content {
+  display: flex; flex-direction: column; align-items: center;
+}
+.loading-spinner {
+  width: 50rpx; height: 50rpx;
+  border: 3rpx solid #E5E6EB;
+  border-top-color: #165DFF;
+  border-radius: 50%;
+  animation: spin 0.8s infinite linear;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-size: 28rpx;
+  color: #86909C;
+  margin-top: 16rpx;
+}
+
+/* ==============================
+   购物车列表
+============================== */
+.cart-list {
+  padding: 16rpx;
+}
+
+.cart-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  border: 1rpx solid #F2F2F2;
+  transition: all 0.2s ease;
+}
+
+.cart-item:active {
+  transform: scale(0.99);
+}
+
+/* 商品图片 */
+.item-image {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  background: #F7F8FA;
+  object-fit: cover;
+  /* 图片加极淡蓝边框，呼应主色 */
+  border: 1rpx solid #E8F3FF;
+}
+
+/* 商品信息 */
+.item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.item-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1D2129;
+  line-height: 1.4;
+}
+
+.item-sku {
+  font-size: 24rpx;
+  color: #86909C;
+}
+
+.item-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-price {
+  font-size: 34rpx;
+  /* font-weight: bold; */
+  /* 价格用主色蓝，更突出 */
+  color: #165DFF;
+}
+
+.item-stock {
+  font-size: 24rpx;
+  color: #86909C;
+}
+
+/* 数量选择器：蓝橙细节点缀 */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  background: #F7F8FA;
+  border-radius: 12rpx;
+  width: fit-content;
+  overflow: hidden;
+  border: 1rpx solid #E5E6EB;
+}
+.quantity-btn {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #1D2129;
+  transition: all 0.2s ease;
+}
+.quantity-btn:active {
+  background-color: #E8F3FF;
+  color: #165DFF;
+}
+.quantity-btn.minus {
+  border-right: 1rpx solid #E5E6EB;
+}
+.quantity-btn.plus {
+  border-left: 1rpx solid #E5E6EB;
+}
+.quantity-input {
+  width: 70rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #1D2129;
+}
+
+/* 删除按钮：橙色小圆X，完美落地你的需求 */
+.item-delete {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background-color: #FFF7E6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.item-delete:active {
+  background-color: #FFE8CC;
+  transform: scale(0.95);
+}
+.delete-icon {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF7D00;
+  line-height: 1;
+}
+
+/* ==============================
+   空状态
+============================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #F2F3F5;
+  padding: 0 64rpx;
+}
+
+.empty-icon-wrap {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background-color: #E6F4FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.empty-icon-text {
+  font-size: 72rpx;
+  opacity: 0.6;
+}
+
+.empty-title {
+  font-size: 36rpx;
+  color: #1D2129;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.empty-hint {
+  font-size: 28rpx;
+  color: #86909C;
+  margin-bottom: 64rpx;
+}
+
+.go-shopping-btn {
+  width: 320rpx;
+  height: 88rpx;
+  background-color: #165DFF;
+  color: #ffffff;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.go-shopping-btn-active {
+  opacity: 0.85;
+}
+
+/* ==============================
+   底部工具栏：蓝橙重点强化
+============================== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.select-all {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 28rpx;
+  color: #1D2129;
+}
+
+.total-section {
+  flex: 1;
+  margin-left: 24rpx;
+}
+.total-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+.total-label {
+  font-size: 28rpx;
+  color: #1D2129;
+}
+.total-price {
+  font-size: 38rpx;
+  /* font-weight: bold; */
+  /* 合计价格用橙色，和删除按钮呼应，视觉焦点统一 */
+  /* color: #FF7D00; */
+  color: #165DFF;
+}
+.total-hint {
+  font-size: 22rpx;
+  color: #86909C;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.checkout-btn {
+  background: #165DFF;
+  color: #fff;
+  padding: 24rpx 48rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-left: 16rpx;
+  border: none;
+  transition: all 0.2s ease;
+}
+.checkout-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+.checkout-btn[disabled] {
+  background: #94A3B8;
+}
+
+
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #F2F3F5;
+  padding: 0 64rpx;
+}
+
+.login-icon-wrap {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background-color: #E6F4FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+}
+
+.login-icon-text {
+  font-size: 72rpx;
+  opacity: 0.6;
+}
+
+.login-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1D2129;
+  margin-bottom: 12rpx;
+}
+
+.login-desc {
+  font-size: 28rpx;
+  color: #86909C;
+  margin-bottom: 64rpx;
+}
+
+.login-btn {
+  width: 320rpx;
+  height: 88rpx;
+  background-color: #165DFF;
+  color: #ffffff;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.login-btn-active {
+  opacity: 0.85;
+}
