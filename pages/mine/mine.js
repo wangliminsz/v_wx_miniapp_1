@@ -35,11 +35,6 @@ Page({
   },
 
   async onLoad() {
-    wx.showLoading({
-      title: '加载中...',
-      mask: true
-    });
-
     await app.initPromise;
     await app.loginPromise;
 
@@ -69,7 +64,6 @@ Page({
     this.setData({
       isLoading: false
     });
-    wx.hideLoading();
   },
 
   async onShow() {

@@ -463,33 +463,13 @@
 }
 
 /* ========== 加载状态 ========== */
+/* NOTE: Loading styles are now global in app.wxss */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 200rpx 0;
-}
-
-.loading-spinner {
-  width: 80rpx;
-  height: 80rpx;
-  border: 4rpx solid #E5E6EB;
-  border-top-color: #165DFF;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-text {
-  margin-top: 24rpx;
-  font-size: 26rpx;
-  color: #86909C;
 }
 
 /* ========== 错误状态 ========== */
@@ -1009,35 +989,7 @@
 
 
 
-/* ========== 加载状态 ========== */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 200rpx 0;
-}
 
-.loading-spinner {
-  width: 80rpx;
-  height: 80rpx;
-  border: 4rpx solid #E5E6EB;
-  border-top-color: #165DFF;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-text {
-  margin-top: 24rpx;
-  font-size: 12px;
-  color: #86909C;
-}
 
 /* ========== 错误状态 ========== */
 .error-state {

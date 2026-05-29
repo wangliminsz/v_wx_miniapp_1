@@ -15,7 +15,8 @@ App({
     baseUrl: config.baseUrl,
     isLogin: false,
     windowHeight: 0,
-    windowWidth: 0
+    windowWidth: 0,
+    safeAreaTop: 0
 
   },
 
@@ -404,6 +405,7 @@ App({
       const windowInfo = wx.getWindowInfo();
       this.globalData.windowHeight = windowInfo.windowHeight;
       this.globalData.windowWidth = windowInfo.windowWidth;
+      this.globalData.safeAreaTop = windowInfo.safeArea.top;
     } catch (e) {
       console.error('获取设备屏幕尺寸失败', e);
     }

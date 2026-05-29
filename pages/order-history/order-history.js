@@ -1,3 +1,4 @@
+const app = getApp();
 const { graphqlClient } = require('../../utils/api.js');
 
 Page({
@@ -12,19 +13,36 @@ Page({
       { key: 'Cancelled', label: '已取消' },
       { key: 'all', label: '全部' },
     ],
+    safeAreaTop: 0,
+    navBarHeight: 44,
+    isInitialLoad: true,
   },
 
   onLoad() {
+    // Use safe area top from app.globalData which is already initialized in app.onLaunch
+    this.setData({
+      safeAreaTop: app.globalData.safeAreaTop || 0,
+    });
     this.loadOrders();
   },
 
+  goBack() {
+    wx.switchTab({
+      url: '/pages/mine/mine',
+    });
+  },
+
   onShow() {
-    this.loadOrders();
+    // Only load orders if it's not the initial load (initial load handled by onLoad)
+    if (!this.data.isInitialLoad) {
+      this.loadOrders();
+    } else {
+      this.setData({ isInitialLoad: false });
+    }
   },
 
   async loadOrders() {
     this.setData({ isLoading: true });
-    wx.showLoading({ title: '加载中...' });
 
     try {
       const query = `
@@ -88,7 +106,6 @@ Page({
       console.error('加载订单失败:', error);
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
-      wx.hideLoading();
       this.setData({ isLoading: false });
     }
   },

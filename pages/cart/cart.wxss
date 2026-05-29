@@ -7,6 +7,15 @@
   padding-bottom: 140rpx;
 }
 
+.container_no_bottom_padding {
+  min-height: 100vh;
+  background-color: #F7F8FA;
+  /* padding-bottom: 140rpx; */
+  padding-top: 90rpx;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ==============================
    原生风格自定义导航栏
 ============================== */

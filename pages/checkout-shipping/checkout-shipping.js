@@ -32,9 +32,6 @@ Page({
     this.setData({
       isLoading: true
     });
-    wx.showLoading({
-      title: '加载中...'
-    });
 
     try {
       await this.loadActiveOrder();
@@ -46,7 +43,6 @@ Page({
         icon: 'none'
       });
     } finally {
-      wx.hideLoading();
       this.setData({
         isLoading: false
       });

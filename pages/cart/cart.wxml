@@ -104,8 +104,9 @@
 
 </block>
 
+<!-- style="padding-top: {{navBarHeight + safeAreaTop}}px;" -->
 <block wx:else>
-  <view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;">
+  <view class="container_no_bottom_padding">
 
     <view class="login-prompt">
       <view class="login-icon-wrap">

@@ -14,10 +14,9 @@ Page({
   },
 
   onLoad() {
-    // Get safe area top height
-    const systemInfo = wx.getSystemInfoSync();
+    // Get safe area top from app.globalData which is already initialized
     this.setData({
-      safeAreaTop: systemInfo.safeArea.top,
+      safeAreaTop: app.globalData.safeAreaTop || 0,
     });
     this.initCart();
     this.setData({ isLogin: app.globalData.isLogin });
