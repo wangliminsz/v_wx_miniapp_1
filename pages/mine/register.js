@@ -13,7 +13,8 @@ Page({
     userMobileColor: '#707070',
     hasUserInfo: false,
     verifyCode: '',
-    isLogin: false
+    isLogin: false,
+    companyInfo: ''
   },
 
   checkboxChange(e) {
@@ -46,6 +47,7 @@ Page({
     const nickname = wx.getStorageSync('nickname') || '';
     const mobile = wx.getStorageSync('mobile') || '';
     const userName = wx.getStorageSync('userName') || '';
+    const companyInfo = wx.getStorageSync('companyInfo') || '';
 
     if (openid) this.setData({
       userOpenId: openid
@@ -68,6 +70,9 @@ Page({
     });
     if (userName) this.setData({
       userName: userName
+    });
+    if (companyInfo) this.setData({
+      companyInfo: companyInfo
     });
 
     this.setData({
@@ -122,11 +127,12 @@ Page({
     const lastName = this.data.userName;
     const phone = this.data.userMobile;
     const avatarUrl = this.data.userAvatarUrl || '/static/images/get_avatar.png';
+    const companyInfo = this.data.companyInfo || '';
 
     try {
       if (this.data.isLogin) {
         console.log('【更新】检测到老用户状态，正在同步修改至 Vendure 系统...');
-        const updateRes = await this.updateToVendure(nickname, lastName, phone);
+        const updateRes = await this.updateToVendure(nickname, lastName, phone, companyInfo);
 
         if (!updateRes.success) {
           wx.hideLoading();
@@ -139,7 +145,7 @@ Page({
         }
       } else {
         console.log('【开户】检测到电商未注册状态，发起 Vendure 注册流程...');
-        const loginRes = await this.registerToVendureWithCode(openId, verifyCode, nickname, lastName, phone);
+        const loginRes = await this.registerToVendureWithCode(openId, verifyCode, nickname, lastName, phone, companyInfo);
 
         if (!loginRes.success) {
           wx.hideLoading();
@@ -152,7 +158,7 @@ Page({
         }
       }
 
-      await this.cloudDbWrite(openId, avatarUrl, nickname, phone, lastName);
+      await this.cloudDbWrite(openId, avatarUrl, nickname, phone, lastName, companyInfo);
 
       wx.hideLoading();
 
@@ -166,6 +172,7 @@ Page({
       wx.setStorageSync('mobile', phone);
       wx.setStorageSync('avatarurl', avatarUrl);
       wx.setStorageSync('userName', lastName);
+      wx.setStorageSync('companyInfo', companyInfo);
 
       wx.setStorageSync('last-auth-channel-token', app.globalData.activeChannelToken);
       app.globalData.lastChannelToken = app.globalData.activeChannelToken;
@@ -196,7 +203,7 @@ Page({
    * 🟢 纯净逻辑 A（全面改造升级）：通过授权激活码发起微信开户注册
    * 适用场景：用户填了4位激活码，点击“提交激活并注册”
    */
-  registerToVendureWithCode(openId, verifyCode, nickname, lastName, phone) {
+  registerToVendureWithCode(openId, verifyCode, nickname, lastName, phone, companyInfo) {
     return new Promise((resolve) => {
       wx.request({
         url: app.globalData.baseUrl,
@@ -208,13 +215,15 @@ Page({
         data: {
           // 🎯 调用新解耦的核销注册 Mutation
           query: `
-            mutation DoAuthRegister($openId: String!, $verifyCode: String!, $nickname: String, $lastName: String, $phone: String) {
+            mutation DoAuthRegister($openId: String!, $verifyCode: String!, $nickname: String, $lastName: String, $phone: String, $companyInfo: String, $invoiceInfo: String) {
               registerWithAuthCode(
                 openId: $openId,
                 verifyCode: $verifyCode,
                 nickname: $nickname,
                 lastName: $lastName,
-                phoneNumber: $phone
+                phoneNumber: $phone,
+                companyInfo: $companyInfo,
+                invoiceInfo: $invoiceInfo    
               ) {
                 id
                 identifier
@@ -226,7 +235,9 @@ Page({
             verifyCode: verifyCode.toUpperCase().trim(), // 强转大写防错
             nickname: nickname,
             lastName: lastName,
-            phone: phone
+            phone: phone,
+            companyInfo: companyInfo,
+            invoiceInfo: ""
           }
         },
         success: (res) => {
@@ -341,7 +352,7 @@ Page({
   /**
    * 纯净逻辑 B：老用户修改核心资料（🔥 已修复 400 Bad Request 语法）
    */
-  updateToVendure(nickname, lastName, phone) {
+  updateToVendure(nickname, lastName, phone, companyInfo) {
     const token = wx.getStorageSync('vendure-auth-token');
     return new Promise((resolve) => {
       wx.request({
@@ -353,11 +364,14 @@ Page({
         },
         data: {
           query: `
-            mutation UpdateCustomerInfo($firstName: String, $lastName: String, $phone: String) {
+            mutation UpdateCustomerInfo($firstName: String, $lastName: String, $phone: String, $companyInfo: String) {
               updateCustomer(input: {
                 firstName: $firstName,
                 lastName: $lastName,
-                phoneNumber: $phone
+                phoneNumber: $phone,
+                customFields: {
+                  companyInfo: $companyInfo
+                }
               }) {
                 id # 👈 🔥 关键：直接请求底层对象的属性，剔除不合法的 ... on ErrorResult
               }
@@ -366,7 +380,8 @@ Page({
           variables: {
             firstName: nickname,
             lastName: lastName,
-            phone: phone
+            phone: phone,
+            companyInfo: companyInfo
           }
         },
         success: (res) => {
@@ -404,7 +419,7 @@ Page({
   /**
    * 微信云开发数据库同步下沉
    */
-  cloudDbWrite(userOpenId, userAvatarUrl, userNickName, userMobile, userName) {
+  cloudDbWrite(userOpenId, userAvatarUrl, userNickName, userMobile, userName, companyInfo) {
     if (!app.cloud) {
       console.error('Cloud is not initialized');
       return Promise.resolve(null);
@@ -421,8 +436,11 @@ Page({
         nickname: userNickName,
         mobile: userMobile,
         userName: userName,
-        openid: userOpenId
+        openid: userOpenId,
+        companyInfo: companyInfo
       };
+
+      console.log(companyInfo, "<<<----------------------------- Comapny 2026-05-30")
 
       if (res.data.length > 0) {
         const docId = res.data[0]._id;
@@ -500,5 +518,12 @@ Page({
     this.setData({
       "verifyCode": e.detail.value.toUpperCase()
     });
+  },
+
+  onCompanyInfoInputChange(e) {
+    this.setData({
+      "companyInfo": e.detail.value
+    });
   }
+
 });

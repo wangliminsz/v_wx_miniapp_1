@@ -19,6 +19,7 @@ Page({
     invoiceAddress: null,
     hasInvoiceAddress: false,
     isLogin: false,
+    invoiceInfo: '',
   },
 
   onLoad() {
@@ -186,6 +187,9 @@ Page({
             defaultShippingAddress
             defaultBillingAddress
           }
+          customFields {
+            invoiceInfo
+          }
         }
       }
     `;
@@ -201,7 +205,8 @@ Page({
       });
 
       this.setData({
-        addresses: sortedAddresses
+        addresses: sortedAddresses,
+        invoiceInfo: data?.activeCustomer?.customFields?.invoiceInfo || ''
       });
 
       const orderBillingAddress = this.data.activeOrder?.billingAddress;
@@ -561,6 +566,10 @@ Page({
       //     url: '/pages/order-history/order-history'
       //   });
       // }, 1500);
+
+      // 更新购物车徽章：订单确认后清空购物车
+      app.globalData.cartTotalCount = 0;
+      app.updateCartBadge();
 
       wx.showToast({
         title: '订单已确认',

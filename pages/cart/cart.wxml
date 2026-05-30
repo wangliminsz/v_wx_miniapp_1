@@ -2,8 +2,8 @@
 <view class="nav-bar" style="padding-top: {{safeAreaTop}}px;">
   <view class="nav-bar-inner">
     <view class="nav-bar-left" bindtap="onNavBack">
-        <view class="nav-back-icon"></view>
-      </view>
+      <view class="nav-back-icon"></view>
+    </view>
     <view class="nav-bar-center">
       <text class="nav-bar-title">采购车</text>
     </view>
@@ -24,9 +24,14 @@
   <!-- EMPTY CART → NOW OUTSIDE, CAN ALIGN PERFECTLY -->
   <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
 
-    <view class="empty-icon-wrap">
-      <text class="empty-icon-text">🛒</text>
-    </view>
+    <!-- <view class="empty-icon-wrap">
+      <text class="empty-icon-text"></text>
+    </view> -->
+
+
+
+
+
 
     <text class="empty-title">采购车是空的</text>
     <text class="empty-hint">快去添加商品吧</text>

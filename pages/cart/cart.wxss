@@ -283,8 +283,8 @@
 }
 
 .empty-icon-wrap {
-  width: 160rpx;
-  height: 160rpx;
+  width: 200rpx;
+  height: 200rpx;
   border-radius: 50%;
   background-color: #E6F4FF;
   display: flex;
@@ -293,10 +293,16 @@
   margin-bottom: 40rpx;
 }
 
-.empty-icon-text {
-  font-size: 72rpx;
-  opacity: 0.6;
+.icon {
+  opacity: 0.8;
 }
+
+.empty-icon-text {
+  font-size: 120rpx;
+  opacity: 0.9;
+}
+
+
 
 .empty-title {
   font-size: 36rpx;

@@ -23,7 +23,9 @@
               点击注册
             </view>
             <view class="user-name mb-2" wx:if="{{userName}}">姓名：{{userName}}</view>
-            <view class="user-phone" wx:if="{{userMobile}}">手机号：{{userMobile}}</view>
+            <view class="user-phone mb-2" wx:if="{{userMobile}}">手机号：{{userMobile}}</view>
+            <view class="user-company mb-2" wx:if="{{companyInfo}}">{{companyInfo}}</view>
+            <!-- <view class="user-invoice" wx:if="{{invoiceInfo}}">发票信息：{{invoiceInfo}}</view> -->
           </view>
 
           <!-- 右侧状态 + 地址管理入口 -->

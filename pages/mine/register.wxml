@@ -39,6 +39,12 @@
       <input value="{{userMobile}}" type="number" class="form-input" placeholder="请输入手机号码" placeholder-class="input-placeholder" bind:change="onUserMobileInputChange" maxlength="11" />
     </view>
 
+    <!-- 公司信息行 -->
+    <view class="form-item">
+      <text class="form-label">公司信息</text>
+      <input value="{{companyInfo}}" class="form-input" placeholder="请输入公司信息" placeholder-class="input-placeholder" bind:change="onCompanyInfoInputChange" />
+    </view>
+
     <!-- 4位校验码行 - 仅新用户注册时显示 -->
     <view wx:if="{{!isLogin}}" class="form-item">
       <view class="form-label-wrap">

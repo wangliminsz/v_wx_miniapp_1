@@ -166,6 +166,15 @@
       <textarea class="message-input" placeholder="请输入您的留言（选填）" bindinput="onMessageInput" value="{{customerMessage}}" maxlength="200"></textarea>
     </view>
 
+    <!-- 发票信息 -->
+    <view class="section" wx:if="{{invoiceInfo}}">
+      <view class="section-header">
+        <text class="section-title">发票信息</text>
+      </view>
+      <view class="invoice-info">
+        <text class="invoice-text">{{invoiceInfo}}</text>
+      </view>
+    </view>
 
     <!-- 联系客服 -->
     <view class="section customer-service">

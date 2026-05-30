@@ -293,6 +293,21 @@ page {
   box-sizing: border-box;
 }
 
+/* 发票信息 */
+.invoice-info {
+  width: 100%;
+  background: #F5F7FA;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+
+.invoice-text {
+  font-size: 26rpx;
+  color: #1D2129;
+  line-height: 1.5;
+}
+
 /* 联系客服 */
 .customer-service {
   margin-bottom: 24rpx;

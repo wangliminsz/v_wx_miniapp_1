@@ -13,7 +13,9 @@ Page({
     userMobile: '',
     userMobileColor: '#707070',
     isLogin: false,
-    isLoading: true
+    isLoading: true,
+    companyInfo: '',
+    invoiceInfo: ''
   },
 
   returnToHome: function () {
@@ -160,6 +162,7 @@ Page({
           userNickName: userInfo.nickname ? userInfo.nickname : '',
           userMobile: userInfo.mobile ? userInfo.mobile : '',
           userName: userInfo.userName ? userInfo.userName : '',
+          companyInfo: userInfo.companyInfo ? userInfo.companyInfo : '',
           userInfoExist: true
         });
 
@@ -168,6 +171,7 @@ Page({
         if (userInfo.nickname) wx.setStorageSync('nickname', userInfo.nickname);
         if (userInfo.mobile) wx.setStorageSync('mobile', userInfo.mobile);
         if (userInfo.userName) wx.setStorageSync('userName', userInfo.userName);
+        if (userInfo.companyInfo) wx.setStorageSync('companyInfo', userInfo.companyInfo);
 
         return userInfo;
       } else {
@@ -217,6 +221,12 @@ Page({
       if (data && data.me && typeof data.me === 'object') {
         const customer = data.me;
         app.globalData.customerInfo = customer;
+
+        // // 设置公司信息和发票信息
+        // this.setData({
+        //   companyInfo: customer.customFields?.companyInfo || '',
+        //   invoiceInfo: customer.customFields?.invoiceInfo || ''
+        // });
 
         // 确保 customer 有值且不是 null 再进行后续操作
         if (customer && customer.id) {

@@ -1,3 +1,11 @@
+<!-- 加载状态 -->
+<view wx:if="{{isLoading}}" class="loading-overlay">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+</view>
+
 <!-- 原生风格自定义导航栏 -->
 <view class="nav-bar" style="padding-top: {{safeAreaTop}}px;">
   <view class="nav-bar-inner">
@@ -31,15 +39,9 @@
   </view>
 
   <!-- 订单列表 -->
-  <view class="order-list">
-    <!-- 加载中 -->
-    <view wx:if="{{isLoading}}" class="loading">
-      <view class="loading-spinner"></view>
-      <text class="loading-text">加载中...</text>
-    </view>
-
+  <view class="order-list" wx:if="{{!isLoading}}">
     <!-- 无订单 -->
-    <view wx:elif="{{filteredOrders.length === 0}}" class="empty">
+    <view wx:if="{{filteredOrders.length === 0}}" class="empty">
       <text>暂无订单</text>
     </view>
 

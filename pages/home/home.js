@@ -4,24 +4,8 @@ const { getCollections } = require('../../providers/shop/products/products');
 
 Page({
   data: {
-    banners: [
-      {
-        image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471765660-618-15.jpg',
-        title: '优涂工品',
-        subtitle: '工业耗材B2B批量采购平台',
-      },
-      {
-        image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471828632-72-1.jpg',
-        title: '正品保障',
-        subtitle: '品牌授权 品质保证',
-      },
-      {
-        image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1769908625640-373-road26.jpg',
-        title: '批量优惠',
-        subtitle: '量大价优 采购无忧',
-      },
-    ],
-    bannerInterval: config.BANNER_INTERVAL || 4000,
+    banners: config.banners,
+    bannerInterval: config.BANNER_INTERVAL || 6000,
 
     collections: [],
     collectionsLoading: true,
