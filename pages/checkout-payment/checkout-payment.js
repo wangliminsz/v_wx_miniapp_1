@@ -581,7 +581,7 @@ Page({
       //   url: '/pages/home/home'
       // })
 
-      wx.navigateTo({
+      wx.reLaunch({
         url: '/pages/order-history/order-history'
       })
       

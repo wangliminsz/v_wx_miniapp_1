@@ -205,7 +205,7 @@ async function getCollection(slug, page = 1, pageSize = 20) {
       skip: (page - 1) * pageSize,
       take: pageSize,
       sort: {
-        id: 'ASC',
+        name: 'ASC',
       },
     };
     const data = await graphqlClient.query(GET_COLLECTION, { slug, options });

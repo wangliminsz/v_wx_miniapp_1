@@ -1,5 +1,7 @@
 const app = getApp();
-const { graphqlClient } = require('../../utils/api.js');
+const {
+  graphqlClient
+} = require('../../utils/api.js');
 
 Page({
   data: {
@@ -19,14 +21,18 @@ Page({
       safeAreaTop: app.globalData.safeAreaTop || 0,
     });
     this.initCart();
-    this.setData({ isLogin: app.globalData.isLogin });
+    this.setData({
+      isLogin: app.globalData.isLogin
+    });
   },
 
   async onShow() {
     await app.initPromise;
     await app.loginPromise;
     this.loadCart();
-    this.setData({ isLogin: app.globalData.isLogin });
+    this.setData({
+      isLogin: app.globalData.isLogin
+    });
   },
 
   async initCart() {
@@ -34,8 +40,8 @@ Page({
     await app.initPromise;
     await app.loginPromise;
 
-    this.setData({ 
-      isLogin: app.globalData.isLogin 
+    this.setData({
+      isLogin: app.globalData.isLogin
     }, () => {
       this.loadCart();
     });
@@ -44,8 +50,10 @@ Page({
 
   async loadCart() {
     // wx.showLoading({ title: '加载中...' });
-    this.setData({ isLoading: true });
-    
+    this.setData({
+      isLoading: true
+    });
+
     try {
       if (app.globalData.isLogin) {
         await this.loadServerCart();
@@ -55,13 +63,17 @@ Page({
       }
     } finally {
       // wx.hideLoading();
-      this.setData({ isLoading: false });
+      this.setData({
+        isLoading: false
+      });
     }
   },
 
   async loadServerCart() {
-    this.setData({ isLoading: true });
-    
+    this.setData({
+      isLoading: true
+    });
+
     try {
       const query = `
         query GetActiveOrder {
@@ -112,7 +124,7 @@ Page({
           stock: line.productVariant.stockLevel,
         }));
         this.updateCartDisplay(cartItems);
-        
+
         await this.syncLocalCartToServer(cartItems);
       } else {
         this.checkLocalCartAndSync();
@@ -121,7 +133,9 @@ Page({
       console.error('加载服务器购物车失败:', error);
       this.checkLocalCartAndSync();
     } finally {
-      this.setData({ isLoading: false });
+      this.setData({
+        isLoading: false
+      });
     }
   },
 
@@ -129,7 +143,9 @@ Page({
     const localItems = wx.getStorageSync('cart_items') || [];
     if (localItems.length === 0) return;
 
-    this.setData({ syncStatus: '正在同步本地商品...' });
+    this.setData({
+      syncStatus: '正在同步本地商品...'
+    });
 
     for (const localItem of localItems) {
       const existsInServer = serverItems.some(item => item.variantId === localItem.variantId);
@@ -139,8 +155,10 @@ Page({
     }
 
     wx.removeStorageSync('cart_items');
-    this.setData({ syncStatus: '' });
-    
+    this.setData({
+      syncStatus: ''
+    });
+
     const cartItems = app.getCartItems();
     this.updateCartDisplay(cartItems);
   },
@@ -148,18 +166,139 @@ Page({
   async checkLocalCartAndSync() {
     const localItems = wx.getStorageSync('cart_items') || [];
     if (localItems.length > 0 && app.globalData.isLogin) {      this.setData({ syncStatus: '正在同步购物车...' });
-      
+
       for (const item of localItems) {
         await this.addToServerCart(item.variantId, item.quantity);
       }
-      
+
       wx.removeStorageSync('cart_items');
       this.setData({ syncStatus: '' });
     }
-    
+
     const cartItems = app.getCartItems();
     this.updateCartDisplay(cartItems);
   },
+
+
+  // async checkLocalCartAndSync() {
+  //   // 1. Add loading state to prevent duplicate operations
+  //   if (this.data.isLoading) return;
+
+  //   const localItems = wx.getStorageSync('cart_items') || [];
+
+  //   // 2. Add guard clauses for empty/local login state
+  //   if (localItems.length === 0 || !app.globalData.isLogin) {
+  //     // Still update display even if no sync needed
+  //     const cartItems = app.getCartItems();
+  //     this.updateCartDisplay(cartItems);
+  //     return;
+  //   }
+
+  //   try {
+  //     this.setData({ 
+  //       isLoading: true,  // 3. Add loading state
+  //       syncStatus: '正在同步购物车...' 
+  //     });
+
+  //     // 4. Add batch operation + error handling for each item
+  //     const syncPromises = localItems.map(async (item) => {
+  //       try {
+  //         // Validate item data before sync
+  //         if (!item.variantId || !item.quantity || item.quantity <= 0) {
+  //           console.warn('无效的本地购物车商品，跳过同步:', item);
+  //           return;
+  //         }
+  //         await this.addToServerCart(item.variantId, item.quantity);
+  //       } catch (error) {
+  //         console.error(`同步商品 ${item.variantId} 失败:`, error);
+  //         // Optionally: collect failed items instead of failing all
+  //         // failedItems.push(item);
+  //       }
+  //     });
+
+  //     // Wait for all items to sync (even if some fail)
+  //     await Promise.all(syncPromises);
+
+  //     // 5. Only clear storage if sync completes (avoid data loss)
+  //     wx.removeStorageSync('cart_items');
+  //     this.setData({ syncStatus: '' });
+
+  //     // 6. Reload server cart to get latest data (instead of local)
+  //     await this.loadServerCart();
+  //   } catch (error) {
+  //     console.error('购物车同步整体失败:', error);
+  //     this.setData({ syncStatus: '同步失败，请稍后重试' });
+  //     // Fallback: update display with local data
+  //     const cartItems = app.getCartItems();
+  //     this.updateCartDisplay(cartItems);
+  //   } finally {
+  //     // 7. Ensure loading state is reset
+  //     this.setData({ isLoading: false });
+  //   }
+  // },
+
+
+
+  // async checkLocalCartAndSync() {
+  //   // 1. 防止重复操作锁
+  //   if (this.data.isLoading) return;
+
+  //   const localItems = wx.getStorageSync('cart_items') || [];
+
+  //   // 2. 守卫守则：空数据或未登录直接放行
+  //   if (localItems.length === 0 || !app.globalData.isLogin) {
+  //     const cartItems = app.getCartItems();
+  //     this.updateCartDisplay(cartItems);
+  //     return;
+  //   }
+
+  //   try {
+  //     this.setData({
+  //       isLoading: true,
+  //       syncStatus: '正在同步购物车...'
+  //     });
+
+  //     // 3. 🔥 核心修复：抛弃 Promise.all，改用 for...of 串行安全同步
+  //     // 这样请求会一个接一个排队发送，彻底杜绝微信底层并发请求产生的 Cannot read property '0' of null 错误
+  //     for (const item of localItems) {
+  //       // 验证单项数据
+  //       if (!item || !item.variantId || !item.quantity || item.quantity <= 0) {
+  //         console.warn('无效的本地购物车商品，跳过同步:', item);
+  //         continue; // 跳过，继续下一个
+  //       }
+
+  //       try {
+  //         // 精准等待上一个请求完成后，再发起下一个
+  //         await this.addToServerCart(item.variantId, item.quantity);
+  //       } catch (singleError) {
+  //         // 单个商品同步失败，不影响后续商品的同步
+  //         console.error(`同步单个商品 ${item.variantId} 失败:`, singleError);
+  //       }
+  //     }
+
+  //     // 4. 同步全部完成后，一次性清空本地缓存
+  //     wx.removeStorageSync('cart_items');
+  //     this.setData({
+  //       syncStatus: ''
+  //     });
+
+  //     // 5. 重新加载服务器购物车以刷新 UI
+  //     await this.loadServerCart();
+  //   } catch (error) {
+  //     console.error('购物车同步整体流程发生错误:', error);
+  //     this.setData({
+  //       syncStatus: '同步失败，请稍后重试'
+  //     });
+  //     // 降级：依然用本地数据展示
+  //     const cartItems = app.getCartItems();
+  //     this.updateCartDisplay(cartItems);
+  //   } finally {
+  //     // 6. 务必释放加载状态锁
+  //     this.setData({
+  //       isLoading: false
+  //     });
+  //   }
+  // },
 
   async addToServerCart(variantId, quantity) {
     try {
@@ -178,7 +317,10 @@ Page({
         }
       `;
 
-      const result = await graphqlClient.mutate(mutation, { productVariantId: variantId, quantity });
+      const result = await graphqlClient.mutate(mutation, {
+        productVariantId: variantId,
+        quantity
+      });
       return result?.addItemToOrder;
     } catch (error) {
       console.error('添加商品到服务器购物车失败:', error);
@@ -230,7 +372,7 @@ Page({
   async onPlus(e) {
     const index = e.currentTarget.dataset.index;
     const cartItems = [...this.data.cartItems];
-    
+
     const item = cartItems[index];
     if (item.stock !== undefined && typeof item.stock === 'number' && item.quantity >= item.stock) {
       wx.showToast({
@@ -239,7 +381,7 @@ Page({
       });
       return;
     }
-    
+
     cartItems[index].quantity += 1;
     await this.updateCart(cartItems);
   },
@@ -274,8 +416,10 @@ Page({
 
   async updateCart(cartItems, isDelete = false, deletedItem = null) {
     if (app.globalData.isLogin) {
-      this.setData({ isLoading: true });
-      
+      this.setData({
+        isLoading: true
+      });
+
       try {
         if (isDelete && deletedItem) {
           await this.removeFromServerCart(deletedItem.id);
@@ -289,7 +433,9 @@ Page({
         console.error('更新服务器购物车失败:', error);
         this.updateCartDisplay(cartItems);
       } finally {
-        this.setData({ isLoading: false });
+        this.setData({
+          isLoading: false
+        });
       }
     } else {
       this.updateCartDisplay(cartItems);
@@ -310,7 +456,9 @@ Page({
         }
       `;
 
-      await graphqlClient.mutate(mutation, { orderLineId: lineId });
+      await graphqlClient.mutate(mutation, {
+        orderLineId: lineId
+      });
     } catch (error) {
       console.error('删除商品失败:', error);
     }
@@ -335,7 +483,10 @@ Page({
         }
       `;
 
-      const result = await graphqlClient.mutate(mutation, { orderLineId: lineId, quantity });
+      const result = await graphqlClient.mutate(mutation, {
+        orderLineId: lineId,
+        quantity
+      });
 
       if (result?.adjustOrderLine?.__typename === 'ErrorResult') {
         wx.showToast({
