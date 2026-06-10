@@ -27,6 +27,9 @@
           <image src="{{item.image}}" mode="aspectFill" class="product-image"></image>
           <view class="product-info">
             <text class="product-name">{{item.name}}</text>
+            <view class="product-tags" wx:if="{{item.options.length > 0}}">
+              <text class="product-tag" wx:for="{{item.options}}" wx:for-item="option" wx:key="id">{{option.name}}</text>
+            </view>
             <view class="product-footer">
               <view class="product-prices">
                 <text class="product-price">¥ {{item.price}} 元/kg</text>

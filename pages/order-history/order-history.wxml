@@ -22,19 +22,34 @@
 <view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;">
   <!-- 筛选栏 -->
   <view class="filter-bar">
-    <view 
-      wx:for="{{filters}}" 
-      wx:key="key"
-      class="filter-item {{currentFilter === item.key ? 'active' : ''}}"
-      bindtap="onFilterTap"
-      data-key="{{item.key}}"
-    >
+    <view wx:for="{{filters}}" wx:key="key" class="filter-item {{currentFilter === item.key ? 'active' : ''}}" bindtap="onFilterTap" data-key="{{item.key}}">
       {{item.label}}
     </view>
-    
+
     <view class="sort-btn" bindtap="toggleSortOrder">
       <text>日期</text>
       <text class="sort-icon">{{sortOrder === 'desc' ? '↓' : '↑'}}</text>
+    </view>
+  </view>
+
+  <!-- 搜索框（仅在"全部" tab 下显示） -->
+  <view class="search-bar" wx:if="{{currentFilter === 'all'}}">
+    <view class="search-box">
+      <view class="search-input-wrapper">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="搜索订单号/SKU/商品名"
+          value="{{searchKeyword}}"
+          bindinput="onSearchInput"
+        />
+        <view class="clear-icon-wrapper" wx:if="{{searchKeyword}}" bindtap="onSearchClear">
+          <text class="clear-icon">×</text>
+        </view>
+      </view>
+      <view class="search-icon-wrapper" bindtap="onSearchClick">
+        <image class="search-icon" src="/static/icons/search-360.png" mode="aspectFit" />
+      </view>
     </view>
   </view>
 
@@ -49,10 +64,10 @@
     <view wx:else class="orders">
       <view wx:for="{{filteredOrders}}" wx:key="id" class="order-card">
         <view class="order-header">
-          <text class="order-code">订单号: {{item.code}}</text>
+          <text class="order-code" bindtap="onCopyOrderCode" data-code="{{item.code}}">订单号: {{item.code}}</text>
           <text class="order-state {{item.state}}">{{item.stateLabel}}</text>
         </view>
-        
+
         <view class="order-content">
           <view class="order-line" wx:for="{{item.formattedLines}}" wx:for-item="line" wx:for-index="lineIndex" wx:key="lineIndex">
             <text class="order-items">{{line.productVariant.name}}</text>
@@ -60,11 +75,47 @@
               <text class="order-count">{{line.formattedUnitPrice}}</text>
               <text class="order-count">*</text>
               <text class="order-count">{{line.quantity}} kg</text>
-              
+
             </view>
           </view>
           <view class="shipping-info">
             <text class="order-count">运费: {{item.formattedShipping}}</text>
+          </view>
+          <view class="fulfillment-info">
+            <text class="fulfillment-label">发货状态:</text>
+            <text class="fulfillment-text">{{item.fulfillmentSummary.statusText}}</text>
+          </view>
+
+          <!-- 发货详情 (每个 fulfillment 一组) -->
+          <view class="fulfillment-details" wx:if="{{item.fulfillmentSummary.details.length > 0}}">
+            <view wx:for="{{item.fulfillmentSummary.details}}" wx:for-item="fl" wx:for-index="flIndex" wx:key="fulfillmentIndex" class="fulfillment-group">
+              <view class="fulfillment-group-header">
+                <text class="fl-title">第 {{fl.fulfillmentIndex}} 次发货</text>
+                <text class="fl-status" wx:if="{{!fl.trackingCode}}">{{fl.statusText}}</text>
+                <block wx:else>
+
+                  <div>
+                    <div>
+                      <text class="fl-tracking-code">{{fl.statusTextBeforeTracking}}</text>
+                    </div>
+
+                    <div>
+                      <text class="fl-tracking-code" bindtap="onCopyTrackingCode" data-code="{{fl.trackingCode}}">{{fl.trackingCode}}</text>
+                    </div>
+                  </div>
+
+                </block>
+              </view>
+              <view wx:for="{{fl.items}}" wx:for-item="flItem" wx:for-index="flItemIndex" wx:key="flItemIndex" class="fulfillment-item">
+                <view class="fl-item-name-row">
+                  <text class="fl-item-name">{{flItem.name}}</text>
+                </view>
+                <view class="fl-item-meta-row">
+                  <text class="fl-item-meta">Qty: {{flItem.quantity}}</text>
+                  <text class="fl-item-meta">SKU: {{flItem.sku}}</text>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
 
@@ -73,6 +124,12 @@
           <view class="order-total">
             <text class="total-label">合计:</text>
             <text class="total-amount">{{item.formattedTotal}}</text>
+          </view>
+        </view>
+
+        <view class="order-actions">
+          <view class="history-btn" bindtap="onHistoryTap" data-order-id="{{item.id}}" data-order-code="{{item.code}}">
+            <text>History</text>
           </view>
         </view>
       </view>

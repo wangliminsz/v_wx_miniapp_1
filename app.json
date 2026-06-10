@@ -11,6 +11,7 @@
     "pages/checkout-shipping/checkout-shipping",
     "pages/checkout-payment/checkout-payment",
     "pages/order-history/order-history",
+    "pages/order-history-detail/order-history-detail",
     "pages/userAgreement/userAgreement",
     "pages/privacyPolicy/privacyPolicy"
   ],

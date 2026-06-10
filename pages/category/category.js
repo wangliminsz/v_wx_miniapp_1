@@ -153,6 +153,15 @@ Page({
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
 
+          // 优先取 variant 自己的 options，否则从 product.optionGroups 提取
+          let options = item.options || [];
+          if (options.length === 0 && product.optionGroups && product.optionGroups.length > 0) {
+            options = product.optionGroups.map(group => ({
+              id: group.id,
+              name: group.name,
+            }));
+          }
+
           return {
             id: item.id,
             name: item.name,
@@ -165,6 +174,7 @@ Page({
             stock: item.stockLevel || '充足',
             moq: '1',
             leadTime: '3-5天',
+            options: options,
           };
         });
 
@@ -216,6 +226,15 @@ Page({
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
 
+          // 优先取 variant 自己的 options，否则从 product.optionGroups 提取
+          let options = item.options || [];
+          if (options.length === 0 && product.optionGroups && product.optionGroups.length > 0) {
+            options = product.optionGroups.map(group => ({
+              id: group.id,
+              name: group.name,
+            }));
+          }
+
           return {
             id: item.id,
             name: item.name,
@@ -228,6 +247,7 @@ Page({
             stock: item.stockLevel || '充足',
             moq: '1',
             leadTime: '3-5天',
+            options: options,
           };
         });
 
@@ -343,6 +363,15 @@ Page({
           const variantImage = item.featuredAsset && item.featuredAsset.preview;
           const productImage = product.featuredAsset && product.featuredAsset.preview;
 
+          // 优先取 variant 自己的 options，否则从 product.optionGroups 提取
+          let options = item.options || [];
+          if (options.length === 0 && product.optionGroups && product.optionGroups.length > 0) {
+            options = product.optionGroups.map(group => ({
+              id: group.id,
+              name: group.name,
+            }));
+          }
+
           return {
             id: item.id,
             name: item.name,
@@ -355,6 +384,7 @@ Page({
             stock: item.stockLevel || '充足',
             moq: '1',
             leadTime: '3-5天',
+            options: options,
           };
         });
 

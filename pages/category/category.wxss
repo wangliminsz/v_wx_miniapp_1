@@ -185,6 +185,21 @@
   margin-bottom: 4rpx;
 }
 
+.product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 12rpx;
+}
+
+.product-tag {
+  background-color: #E8F4FF;
+  color: #165DFF;
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+}
+
 .product-sku {
   font-size: 22rpx;
   color: #86909C;

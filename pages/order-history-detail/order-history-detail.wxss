@@ -1,0 +1,223 @@
+/* ==============================
+   原生风格自定义导航栏
+============================== */
+.nav-bar {
+  background-color: #ffffff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+}
+
+.nav-bar-inner {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.nav-bar-left {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.nav-back-icon {
+  width: 20px;
+  height: 20px;
+  background-color: #000000;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M15 18L9 12L15 6' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M15 18L9 12L15 6' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
+.nav-bar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bar-title {
+  font-size: 13px;
+  font-weight: 100;
+  color: #000000;
+}
+
+.nav-bar-right {
+  width: 44px;
+}
+
+/* ==============================
+   加载状态
+============================== */
+.loading-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-spinner {
+  width: 50rpx;
+  height: 50rpx;
+  border: 3rpx solid #E5E6EB;
+  border-top-color: #165DFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #86909C;
+  margin-top: 16rpx;
+}
+
+/* ==============================
+   内容区
+============================== */
+.container {
+  min-height: 100vh;
+  background-color: #F2F3F5;
+  padding: 24rpx;
+}
+
+/* 订单概要 */
+.order-summary {
+  background: #ffffff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+}
+
+.summary-label {
+  font-size: 26rpx;
+  color: #86909C;
+}
+
+.summary-value {
+  font-size: 26rpx;
+  color: #1D2129;
+  font-weight: 500;
+}
+
+.state-label {
+  color: #165DFF;
+}
+
+/* 历史记录 */
+.history-section {
+  background: #ffffff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+}
+
+.section-title-bar {
+  border-left: 4rpx solid #165DFF;
+  padding-left: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.empty-history {
+  text-align: center;
+  padding: 60rpx 0;
+  color: #86909C;
+  font-size: 28rpx;
+}
+
+/* 时间线样式 */
+.history-list {
+  padding-left: 16rpx;
+}
+
+.history-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding-bottom: 32rpx;
+  border-left: 2rpx solid #E5E6EB;
+  margin-left: 12rpx;
+  padding-left: 32rpx;
+}
+
+.history-item:last-child {
+  border-left: 2rpx solid transparent;
+  padding-bottom: 0;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -10rpx;
+  top: 8rpx;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background-color: #165DFF;
+  border: 4rpx solid #ffffff;
+  box-shadow: 0 0 0 2rpx #165DFF;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-header {
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-between; */
+  /* align-items: center; */
+  margin-bottom: 8rpx;
+}
+
+.history-type {
+  font-size: 26rpx;
+  color: #1D2129;
+  font-weight: 500;
+}
+
+.history-date {
+  font-size: 22rpx;
+  color: #86909C;
+}
+
+.history-detail {
+  font-size: 24rpx;
+  color: #4E5969;
+  line-height: 1.4;
+}

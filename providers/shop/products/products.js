@@ -57,15 +57,30 @@ const GET_COLLECTION = `
             id
             preview
           }
-          product {
+          options {
             id
+            code
             name
-            slug
-            featuredAsset {
-              id
-              preview
-            }
           }
+          product {
+              id
+              name
+              slug
+              featuredAsset {
+                id
+                preview
+              }
+              optionGroups {
+                id
+                code
+                name
+                options {
+                  id
+                  code
+                  name
+                }
+              }
+            }
         }
       }
     }

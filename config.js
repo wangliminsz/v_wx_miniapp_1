@@ -6,12 +6,12 @@ const config = {
 
   development: {
     API_URL: 'http://192.168.0.51:3000/shop-api',
-    GRAPHQL_URL: 'http://192.168.0.51:3000',
+    GRAPHQL_URL: 'http://192.168.0.51',
   },
 
   production: {
     API_URL: 'http://192.168.0.51:3000/shop-api',
-    GRAPHQL_URL: 'http://192.168.0.51:3000',
+    GRAPHQL_URL: 'http://192.168.0.51',
   },
 
 
@@ -35,10 +35,11 @@ const config = {
 
 
   hotSearch: [
-    { keyword: 'Computer', count: 1005 },
-    { keyword: 'Plants', count: 986 },
-    { keyword: 'Camera', count: 854 },
-    { keyword: 'Sports', count: 765 },
+    { keyword: '通用工业粉末', count: 1005 },
+    { keyword: '绝缘粉末', count: 986 },
+    { keyword: '重防腐粉末', count: 854 },
+    { keyword: '环氧粉末', count: 765 },
+    { keyword: '聚酯粉末', count: 612 },
   ],
 
   banners: [

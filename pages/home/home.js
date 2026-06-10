@@ -111,24 +111,26 @@ Page({
         this.setData({ collections: sortedCollections });
       } else {
         const mockCollections = [
-          { id: 1, name: '紧固件', slug: 'fasteners', image: 'https://via.placeholder.com/300x300/165DFF/ffffff?text=紧固件', count: 128 },
-          { id: 2, name: '轴承', slug: 'bearings', image: 'https://via.placeholder.com/300x300/FF7D00/ffffff?text=轴承', count: 86 },
-          { id: 3, name: '五金工具', slug: 'tools', image: 'https://via.placeholder.com/300x300/00B42A/ffffff?text=五金工具', count: 156 },
-          { id: 4, name: '电气元件', slug: 'electronics', image: 'https://via.placeholder.com/300x300/722ED1/ffffff?text=电气元件', count: 98 },
-          { id: 5, name: '劳保用品', slug: 'safety', image: 'https://via.placeholder.com/300x300/13C2C2/ffffff?text=劳保用品', count: 67 },
-          { id: 6, name: '液压气动', slug: 'hydraulic', image: 'https://via.placeholder.com/300x300/EB2F96/ffffff?text=液压气动', count: 78 },
+          { id: 1, name: '通用工业粉末', slug: 'fasteners', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781061031149-34-ral_3011.jpg', count: 12 },
+          { id: 2, name: '平光聚酯粉末', slug: 'bearings', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060981414-9-ral_5010.jpg', count: 8 },
+          { id: 3, name: '环氧粉末', slug: 'tools', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060932518-574-ral_6027.jpg', count: 15 },
+          { id: 4, name: '绝缘粉末', slug: 'electronics', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060900651-496-ral_2003.jpg', count: 9 },
+          { id: 5, name: '平光环氧绝缘粉末', slug: 'safety', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060830381-595-ral_8023.jpg', count: 6 },
+          { id: 6, name: '透明亮光绝缘粉末', slug: 'hydraulic', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060754772-347-ral_9003.jpg', count: 7 },
+          { id: 7, name: '重防腐粉末', slug: 'anti-c', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060702303-493-ral_9005.jpg', count: 18 },
         ];
         this.setData({ collections: mockCollections });
       }
     } catch (error) {
       console.error('Failed to load collections:', error);
       const mockCollections = [
-        { id: 1, name: '紧固件', slug: 'fasteners', image: 'https://via.placeholder.com/300x300/165DFF/ffffff?text=紧固件', count: 128 },
-        { id: 2, name: '轴承', slug: 'bearings', image: 'https://via.placeholder.com/300x300/FF7D00/ffffff?text=轴承', count: 86 },
-        { id: 3, name: '五金工具', slug: 'tools', image: 'https://via.placeholder.com/300x300/00B42A/ffffff?text=五金工具', count: 156 },
-        { id: 4, name: '电气元件', slug: 'electronics', image: 'https://via.placeholder.com/300x300/722ED1/ffffff?text=电气元件', count: 98 },
-        { id: 5, name: '劳保用品', slug: 'safety', image: 'https://via.placeholder.com/300x300/13C2C2/ffffff?text=劳保用品', count: 67 },
-        { id: 6, name: '液压气动', slug: 'hydraulic', image: 'https://via.placeholder.com/300x300/EB2F96/ffffff?text=液压气动', count: 78 },
+        { id: 1, name: '通用工业粉末', slug: 'fasteners', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781061031149-34-ral_3011.jpg', count: 12 },
+          { id: 2, name: '平光聚酯粉末', slug: 'bearings', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060981414-9-ral_5010.jpg', count: 8 },
+          { id: 3, name: '环氧粉末', slug: 'tools', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060932518-574-ral_6027.jpg', count: 15 },
+          { id: 4, name: '绝缘粉末', slug: 'electronics', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060900651-496-ral_2003.jpg', count: 9 },
+          { id: 5, name: '平光环氧绝缘粉末', slug: 'safety', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060830381-595-ral_8023.jpg', count: 6 },
+          { id: 6, name: '透明亮光绝缘粉末', slug: 'hydraulic', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060754772-347-ral_9003.jpg', count: 7 },
+          { id: 7, name: '重防腐粉末', slug: 'anti-c', image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781060702303-493-ral_9005.jpg', count: 18 },
       ];
       this.setData({ collections: mockCollections });
     } finally {

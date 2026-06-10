@@ -21,11 +21,10 @@ App({
   },
 
   // 暴露给所有 Page 的全局登录凭证 Promise
-  loginPromise: null,
-  // 等待 拿到 token
-  tokenPromise: null,
-
+  // 等待 拿到 token Promise
   // 暴露给所有 Page 的全局初始化 Promise (包含渠道 token)
+  loginPromise: null,
+  tokenPromise: null,
   initPromise: null,
 
   async onLaunch(options) {
@@ -108,6 +107,15 @@ App({
     // 全局初始化完成 (渠道 token 已获取)，resolve initPromise
     resolveInitPromise();
   },
+
+
+
+
+
+
+
+
+
 
   /*** 2026-05-23 Channel Token */
 
@@ -650,74 +658,6 @@ App({
       this.initCartBadge();
     }
   },
+
+
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*** 2026-05-23 Channel Token */
-
-// /*** 核心身份鉴权控制流 */
-// async initAuthFlow() {
-//   const token = wx.getStorageSync('vendure-auth-token');
-
-//   // ---- 步骤 1：本地有 Token，优先验证有效性 ----
-//   if (token) {
-//     console.log('【步骤 1】本地发现旧 Token ➡️正在向后端验证有效性...');
-//     const isValid = await this.verifyToken(token);
-
-//     if (isValid) {
-//       console.log('【步骤 1-成功】Token 依然有效 ➡️老用户免密进入首页');
-//       this.setLoginStatus(true);
-//       return {
-//         isLogin: true,
-//         openid: wx.getStorageSync('openid')
-//       };
-//     }
-
-//     console.log('【步骤 1-失效】Token 已失效或过期，清理旧缓存 ➡️准备走 OpenID 检查机制');
-//     wx.removeStorageSync('vendure-auth-token');
-//   }
-
-//   // ---- 步骤 2：获取微信用户的 OpenID ----
-//   console.log('【步骤 2】开始获取用户的微信 OpenID...');
-//   const openid = await this.getWechatOpenId();
-
-//   if (!openid) {
-//     console.error('【步骤 2-异常】未拉取到有效的 OpenID ➡️无法判定注册状态');
-//     this.globalData.isLogin = false;
-//     return {
-//       isLogin: false
-//     };
-//   }
-
-//   // ---- 步骤 3：提交给 Vendure 校验是否注册 ----
-//   console.log('【步骤 3】已取得 OpenID，正在请求 Vendure 校验数据库中的注册状态...');
-//   const isRegisteredUser = await this.checkAndLoginWithVendure(openid);
-
-//   if (isRegisteredUser) {
-//     console.log('【步骤 3-A】该用户已注册过，静默登录成功 ➡️Token 刷新。');
-//     this.setLoginStatus(true);
-//     return {
-//       isLogin: true,
-//       openid
-//     };
-//   } else {
-//     console.log('【步骤 3-B】该用户在系统中尚未创建账号 ➡️ 判定为【未注册新用户】');
-//     this.setLoginStatus(false);
-//     return {
-//       isLogin: false,
-//       openid
-//     };
-//   }
-// },

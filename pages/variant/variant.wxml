@@ -14,7 +14,7 @@
   <view wx:elif="{{variant}}" class="variant-content">
 
     <!-- 商品图片区 -->
-    <view class="product-images">
+    <!-- <view class="product-images">
       <view class="main-image-container">
         <image wx:if="{{images.length > 0}}" src="{{images[currentImageIndex].preview}}" mode="aspectFit" class="main-image" lazy-load />
         <view wx:else class="no-image">
@@ -40,13 +40,16 @@
           <image src="{{item.preview}}" mode="aspectFill" class="thumbnail-image" />
         </view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 商品信息区 -->
     <view class="product-info">
       <view class="product-header">
         <text class="product-name">{{variant.name}}</text>
         <text class="product-subtitle">{{product.name}}</text>
+        <view class="product-tags" wx:if="{{variant.options && variant.options.length > 0}}">
+          <text class="product-tag" wx:for="{{variant.options}}" wx:key="id">{{item.name}}</text>
+        </view>
       </view>
 
       <view class="flex justify-between">
@@ -113,6 +116,38 @@
       </view>
 
     </view>
+
+    <view style="height:0px;"></view>
+
+     <!-- 商品图片区 -->
+    <view class="product-images">
+      <view class="main-image-container">
+        <image wx:if="{{images.length > 0}}" src="{{images[currentImageIndex].preview}}" mode="aspectFit" class="main-image" lazy-load />
+        <view wx:else class="no-image">
+          <text>暂无图片</text>
+        </view>
+
+        <view wx:if="{{images.length > 1}}" class="image-nav">
+          <view class="nav-btn prev" bindtap="onPreviousImage">
+            <text class="nav-icon">‹</text>
+          </view>
+          <view class="nav-btn next" bindtap="onNextImage">
+            <text class="nav-icon">›</text>
+          </view>
+        </view>
+
+        <view wx:if="{{images.length > 1}}" class="image-indicator">
+          <text>{{currentImageIndex + 1}} / {{images.length}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{images.length > 1}}" class="thumbnail-list">
+        <view wx:for="{{images}}" wx:key="id" class="thumbnail-item {{currentImageIndex === index ? 'active' : ''}}" bindtap="onImageTap" data-index="{{index}}">
+          <image src="{{item.preview}}" mode="aspectFill" class="thumbnail-image" />
+        </view>
+      </view>
+    </view>
+
 
     <!-- 底部固定操作栏 -->
     <view class="bottom-bar">
