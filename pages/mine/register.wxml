@@ -42,6 +42,7 @@
     <!-- 公司信息行 -->
     <view class="form-item">
       <text class="form-label">公司信息</text>
+      <text class="required-mark">*</text>
       <input value="{{companyInfo}}" class="form-input" placeholder="请输入公司信息" placeholder-class="input-placeholder" bind:change="onCompanyInfoInputChange" />
     </view>
 

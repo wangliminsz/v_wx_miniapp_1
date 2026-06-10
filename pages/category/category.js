@@ -1,5 +1,4 @@
 const app = getApp();
-const config = require('../../config.js');
 const {
   getCollections,
   getCollection
@@ -7,6 +6,10 @@ const {
 const {
   formatPrice
 } = require('../../utils/util.js');
+const {
+  getMockCategories,
+  getMockProductsBySlug,
+} = require('./mock-products.js');
 
 Page({
   data: {
@@ -25,26 +28,21 @@ Page({
   },
 
   async onLoad(options) {
-    // 等待应用全局初始化完成 (确保渠道 token 已获取)
     await app.initPromise;
-    await app.loginPromise;
+    if (app.loginPromise) {
+      try {
+        await app.loginPromise;
+      } catch (e) {
+        console.warn('category: loginPromise rejected, treat as not logged in', e);
+      }
+    }
 
     this.setData({
       isLogin: app.globalData.isLogin,
       isLoading: false
     }, () => {
       this.loadCategories();
-      if (options.id) {
-        const index = this.data.categories.findIndex(c => c.id == options.id);
-        if (index > -1) {
-          this.setData({
-            activeCategory: index
-          });
-          this.loadSubCategories(options.id);
-        }
-      }
     });
-
   },
 
   onShow() {
@@ -57,19 +55,63 @@ Page({
     if (app.globalData.isLogin) {
       app.syncServerCartCount();
     }
+
+    // 处理从 home 页面通过 switchTab 跳过来并希望定位到指定分类
+    // 兼容两种来源：1) globalData.pendingCategorySlug（首次跳转） 2) page.data.pendingSlug（同 tab 内跳转）
+    const pending = app.globalData.pendingCategorySlug || this.data.pendingSlug;
+    if (pending) {
+      app.globalData.pendingCategorySlug = null;
+      this.setData({ pendingSlug: null });
+      // 等分类加载完成后再切换（如果是首次进入）
+      if (this.data.categories && this.data.categories.length > 0) {
+        this.loadProductsBySlug(pending);
+      } else {
+        // 分类还没加载，把 slug 暂存，等 onLoad 完成后使用
+        this._pendingCategoryAfterLoad = pending;
+      }
+    }
+  },
+
+  _consumePendingSlug() {
+    let slug = null;
+    if (this._pendingCategoryAfterLoad) {
+      slug = this._pendingCategoryAfterLoad;
+      this._pendingCategoryAfterLoad = null;
+    } else if (app.globalData.pendingCategorySlug) {
+      slug = app.globalData.pendingCategorySlug;
+      app.globalData.pendingCategorySlug = null;
+    }
+    return slug;
   },
 
   async loadCategories() {
+    if (!app.globalData.isLogin) {
+      const mockCats = getMockCategories();
+      this.setData({
+        categories: mockCats,
+      });
+      if (mockCats.length > 0 && !this.data.currentSlug) {
+        const slug = this._consumePendingSlug() || mockCats[0].slug;
+        this.setData({ currentSlug: slug });
+        this.loadProductsBySlug(slug);
+      }
+      return;
+    }
+
     try {
       console.log('========== Loading categories from Vendure ==========');
       const collections = await getCollections();
       // console.log('Raw collections from Vendure:', JSON.stringify(collections, null, 2));
 
       if (collections.length === 0) {
-        console.log('No collections returned from Vendure, using default categories');
-        this.setData({
-          categories: config.CATEGORIES
-        });
+        console.log('No collections returned from Vendure, using mock categories');
+        const mockCats = getMockCategories();
+        this.setData({ categories: mockCats });
+        if (mockCats.length > 0 && !this.data.currentSlug) {
+          const slug = this._consumePendingSlug() || mockCats[0].slug;
+          this.setData({ currentSlug: slug });
+          this.loadProductsBySlug(slug);
+        }
         return;
       }
 
@@ -102,16 +144,19 @@ Page({
       });
 
       if (sortedCategories.length > 0 && !this.data.currentSlug) {
-        this.setData({
-          currentSlug: sortedCategories[0].slug
-        });
-        this.loadProductsBySlug(sortedCategories[0].slug);
+        const slug = this._consumePendingSlug() || sortedCategories[0].slug;
+        this.setData({ currentSlug: slug });
+        this.loadProductsBySlug(slug);
       }
     } catch (error) {
       console.error('Failed to load categories:', error);
-      this.setData({
-        categories: config.CATEGORIES,
-      });
+      const mockCats = getMockCategories();
+      this.setData({ categories: mockCats });
+      if (mockCats.length > 0 && !this.data.currentSlug) {
+        const slug = this._consumePendingSlug() || mockCats[0].slug;
+        this.setData({ currentSlug: slug });
+        this.loadProductsBySlug(slug);
+      }
     }
   },
 
@@ -201,24 +246,46 @@ Page({
   },
 
   async loadProductsBySlug(slug) {
+    const catIndex = (this.data.categories || []).findIndex(c => c.slug === slug);
     this.setData({
       currentSlug: slug,
       products: [],
       currentPage: 0,
       hasMore: true,
       loading: true,
+      activeCategory: catIndex > -1 ? catIndex : 0,
     });
+
+    // 微信小程序审核要求：未登录用户展示静态商品数据
+    if (!app.globalData.isLogin) {
+      const mockResult = getMockProductsBySlug(slug, 1, this.data.pageSize);
+      const mockProducts = (mockResult.productVariants.items || []).map(item => ({
+        ...item,
+        formattedUnitPrice: '',
+        options: item.options || [],
+      }));
+
+      // 同步更新左侧分类高亮
+      const index = (this.data.categories || []).findIndex(c => c.slug === slug);
+
+      this.setData({
+        products: mockProducts,
+        currentPage: 1,
+        hasMore: mockResult.productVariants.items.length >= this.data.pageSize,
+        loading: false,
+        activeCategory: index > -1 ? index : 0,
+      });
+      return;
+    }
 
     const result = await getCollection(slug, 1, this.data.pageSize);
 
     if (result) {
       const categories = this.data.categories;
       const index = categories.findIndex(c => c.slug === slug);
-      if (index > -1) {
-        this.setData({
-          activeCategory: index
-        });
-      }
+      this.setData({
+        activeCategory: index > -1 ? index : 0,
+      });
 
       if (result.productVariants && result.productVariants.items && result.productVariants.items.length > 0) {
         const products = result.productVariants.items.map(item => {
@@ -304,6 +371,26 @@ Page({
     const productId = e.currentTarget.dataset.id;
     const productSlug = e.currentTarget.dataset.slug;
 
+    // 微信小程序审核要求：未登录用户点击 mock 商品，
+    // 不应跳转到真实商品页（会显示"商品不存在"），而是引导登录
+    if (!app.globalData.isLogin) {
+      const clickedItem = (this.data.products || []).find(p => p.id === productId);
+      if (clickedItem && clickedItem.isMock) {
+        wx.showModal({
+          title: '请先登录',
+          content: '登录后即可查看商品详情',
+          confirmText: '去登录',
+          cancelText: '取消',
+          success: (res) => {
+            if (res.confirm) {
+              wx.switchTab({ url: '/pages/mine/mine' });
+            }
+          },
+        });
+        return;
+      }
+    }
+
     if (productSlug) {
       wx.navigateTo({
         url: `/pages/variant/variant?productSlug=${productSlug}&variantId=${productId}`,
@@ -352,6 +439,25 @@ Page({
     this.setData({
       loading: true
     });
+
+    // 微信小程序审核要求：未登录用户走 mock
+    if (!app.globalData.isLogin) {
+      const page = this.data.currentPage + 1;
+      const mockResult = getMockProductsBySlug(slug, page, this.data.pageSize);
+      const mockProducts = (mockResult.productVariants.items || []).map(item => ({
+        ...item,
+        formattedUnitPrice: '',
+        options: item.options || [],
+      }));
+
+      this.setData({
+        products: [...this.data.products, ...mockProducts],
+        currentPage: page,
+        hasMore: mockResult.productVariants.items.length >= this.data.pageSize,
+        loading: false,
+      });
+      return;
+    }
 
     try {
       const page = this.data.currentPage + 1;

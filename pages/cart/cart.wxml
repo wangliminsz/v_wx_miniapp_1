@@ -24,15 +24,6 @@
   <!-- EMPTY CART → NOW OUTSIDE, CAN ALIGN PERFECTLY -->
   <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
 
-    <!-- <view class="empty-icon-wrap">
-      <text class="empty-icon-text"></text>
-    </view> -->
-
-
-
-
-
-
     <text class="empty-title">采购车是空的</text>
     <text class="empty-hint">快去添加商品吧</text>
     <navigator url="/pages/category/category" open-type="switchTab" class="go-shopping-btn" hover-class="go-shopping-btn-active">去采购</navigator>
@@ -113,7 +104,7 @@
 <block wx:else>
   <view class="container_no_bottom_padding">
 
-    <view class="login-prompt">
+    <!-- <view class="login-prompt">
       <view class="login-icon-wrap">
         <text class="login-icon-text">🔒</text>
       </view>
@@ -122,7 +113,16 @@
       <navigator url="/pages/mine/mine" open-type="switchTab" class="login-btn" hover-class="login-btn-active">
         <text>去登录</text>
       </navigator>
+    </view> -->
+
+    <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
+
+      <text class="empty-title">采购车是空的</text>
+      <text class="empty-hint">快去添加商品吧</text>
+      <navigator url="/pages/category/category" open-type="switchTab" class="go-shopping-btn" hover-class="go-shopping-btn-active">去采购</navigator>
+
     </view>
+
 
   </view>
 </block>

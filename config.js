@@ -1,17 +1,19 @@
+// https://yt.favor100.site
+
 const config = {
 
   fastapiUrl: "https://bkkapi.favor100.site",
   
-  baseUrl: 'http://192.168.0.51:3000/shop-api',
+  baseUrl: 'https://yt.favor100.site/shop-api',
 
   development: {
-    API_URL: 'http://192.168.0.51:3000/shop-api',
-    GRAPHQL_URL: 'http://192.168.0.51',
+    API_URL: 'https://yt.favor100.site/shop-api',
+    GRAPHQL_URL: 'https://yt.favor100.site',
   },
 
   production: {
-    API_URL: 'http://192.168.0.51:3000/shop-api',
-    GRAPHQL_URL: 'http://192.168.0.51',
+    API_URL: 'https://yt.favor100.site/shop-api',
+    GRAPHQL_URL: 'https://yt.favor100.site',
   },
 
 

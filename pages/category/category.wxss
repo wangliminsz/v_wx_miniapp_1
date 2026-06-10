@@ -224,6 +224,15 @@
   /* font-weight: 600; */
 }
 
+.product-price-mock {
+  font-size: 28rpx;
+  color: #86909C;
+  background-color: #F2F3F5;
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  display: inline-block;
+}
+
 .product-volume-price {
   font-size: 22rpx;
   color: #00B42A;
