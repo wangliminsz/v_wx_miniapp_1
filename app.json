@@ -71,6 +71,9 @@
   "style": "v2",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
+  "usingComponents": {
+    "custom-nav": "/components/CustomNavBar/CustomNavBar"
+  },
   "permission": {
     "scope.userLocation": {
       "desc": "您的位置信息将用于查找附近仓库"

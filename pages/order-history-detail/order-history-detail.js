@@ -4,8 +4,6 @@ const { graphqlClient } = require('../../utils/api.js');
 Page({
   data: {
     isLoading: true,
-    safeAreaTop: 0,
-    navBarHeight: 44,
     orderId: '',
     orderCode: '',
     stateLabel: '',
@@ -14,7 +12,6 @@ Page({
 
   onLoad(options) {
     this.setData({
-      safeAreaTop: app.globalData.safeAreaTop || 0,
       orderId: options.orderId || '',
       orderCode: options.orderCode || '',
     });

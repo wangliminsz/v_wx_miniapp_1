@@ -6,20 +6,9 @@
   </view>
 </view>
 
-<!-- 原生风格自定义导航栏 -->
-<view class="nav-bar" style="padding-top: {{safeAreaTop}}px;">
-  <view class="nav-bar-inner">
-    <view class="nav-bar-left" bindtap="goBack">
-      <view class="nav-back-icon"></view>
-    </view>
-    <view class="nav-bar-center">
-      <text class="nav-bar-title">订单历史</text>
-    </view>
-    <view class="nav-bar-right"></view>
-  </view>
-</view>
+<custom-nav title="订单历史" showBack="{{true}}" bgColor="#ffffff" bind:back="goBack"></custom-nav>
 
-<view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;">
+<view class="container">
   <!-- 筛选栏 -->
   <view class="filter-bar">
     <view wx:for="{{filters}}" wx:key="key" class="filter-item {{currentFilter === item.key ? 'active' : ''}}" bindtap="onFilterTap" data-key="{{item.key}}">

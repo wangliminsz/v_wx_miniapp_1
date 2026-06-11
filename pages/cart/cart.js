@@ -11,15 +11,9 @@ Page({
     isLogin: false,
     isLoading: true,
     syncStatus: '',
-    safeAreaTop: 0,
-    navBarHeight: 44,
   },
 
   onLoad() {
-    // Get safe area top from app.globalData which is already initialized
-    this.setData({
-      safeAreaTop: app.globalData.safeAreaTop || 0,
-    });
     this.initCart();
     this.setData({
       isLogin: app.globalData.isLogin

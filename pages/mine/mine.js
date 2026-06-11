@@ -38,6 +38,15 @@ Page({
 
   async onLoad() {
     await app.initPromise;
+    // 关键：分享直接进入时，必须先等云环境 init() 完成，否则会报
+    // "Cloud API isn't enabled, please call wx.cloud.init first"
+    if (app.cloudInitPromise) {
+      try {
+        await app.cloudInitPromise;
+      } catch (e) {
+        console.warn('mine onLoad: cloudInitPromise rejected', e);
+      }
+    }
     await app.loginPromise;
 
     const openid = app.globalData.openid || wx.getStorageSync('openid');
@@ -81,6 +90,10 @@ Page({
     // 无论是否登录，都尝试读取云数据库数据（优先级更高）
     const openid = app.globalData.openid || wx.getStorageSync('openid');
     if (openid) {
+      // 等云环境 init() 完成（即使 onLoad 已 await 过，onShow 仍需保证）
+      if (app.cloudInitPromise) {
+        try { await app.cloudInitPromise; } catch (e) {}
+      }
       await this.cloudDbRead(openid);
     } else {
       // 如果没有 openid，也要重置数据
@@ -141,6 +154,17 @@ Page({
   async cloudDbRead(openid) {
     if (!app.cloud) {
       console.error('Cloud is not initialized');
+      return null;
+    }
+
+    // 兜底：即使调用方忘了 await，这里也再等一次 init() 完成
+    if (app.cloudInitPromise) {
+      try { await app.cloudInitPromise; } catch (e) {}
+    }
+
+    // init 失败后 cloud 实例仍存在但可能不可用，再做一次防御
+    if (!app.cloud || typeof app.cloud.database !== 'function') {
+      console.error('Cloud database API not available');
       return null;
     }
 

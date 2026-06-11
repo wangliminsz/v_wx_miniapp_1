@@ -147,4 +147,29 @@ Page({
       this.setData({ collectionsLoading: false });
     }
   },
+
+  // ============= 分享功能 =============
+
+  // 分享给好友
+  onShareAppMessage() {
+    // 优先取 banners 第一张作为分享封面，提升点击率
+    // imageUrl: shareImage,
+    const firstBanner = (this.data.banners && this.data.banners[0]) || {};
+    const shareImage = firstBanner.image || '';
+    return {
+      title: '绮一舟粉末采购平台',
+      path: '/pages/home/home',
+    };
+  },
+
+  // 分享到朋友圈
+  onShareTimeline() {
+    const firstBanner = (this.data.banners && this.data.banners[0]) || {};
+    const shareImage = firstBanner.image || '';
+    return {
+      title: '优涂工品 - 工业粉末采购平台',
+      path: '/pages/home/home',
+      imageUrl: shareImage,
+    };
+  },
 });

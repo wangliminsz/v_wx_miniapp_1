@@ -14,17 +14,11 @@ Page({
       { key: 'Cancelled', label: '取消' },
       { key: 'all', label: 'All' },
     ],
-    safeAreaTop: 0,
-    navBarHeight: 44,
     isInitialLoad: true,
     searchKeyword: '',
   },
 
   onLoad() {
-    // Use safe area top from app.globalData which is already initialized in app.onLaunch
-    this.setData({
-      safeAreaTop: app.globalData.safeAreaTop || 0,
-    });
     this.loadOrders();
   },
 

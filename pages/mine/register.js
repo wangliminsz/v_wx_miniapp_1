@@ -25,6 +25,11 @@ Page({
 
   async onLoad() {
 
+    // 防御性 await：防止从 mine 快速进入时，mycloud.init() 还没完成
+    if (app.cloudInitPromise) {
+      try { await app.cloudInitPromise; } catch (e) {}
+    }
+
     // 安全检查全局数据
     if (!app.globalData) {
       console.error('app.globalData is null or undefined');
@@ -419,9 +424,19 @@ Page({
   /**
    * 微信云开发数据库同步下沉
    */
-  cloudDbWrite(userOpenId, userAvatarUrl, userNickName, userMobile, userName, companyInfo) {
+  async cloudDbWrite(userOpenId, userAvatarUrl, userNickName, userMobile, userName, companyInfo) {
     if (!app.cloud) {
       console.error('Cloud is not initialized');
+      return Promise.resolve(null);
+    }
+
+    // 关键：等 mycloud.init() 完成（与 mine.js 同样的竞态修复）
+    if (app.cloudInitPromise) {
+      try { await app.cloudInitPromise; } catch (e) {}
+    }
+
+    if (!app.cloud || typeof app.cloud.database !== 'function') {
+      console.error('Cloud database API not available');
       return Promise.resolve(null);
     }
 
@@ -463,8 +478,19 @@ Page({
     this.uploadAvatarToCloud(avatarurl);
   },
 
-  uploadAvatarToCloud(avatarUrl) {
+  async uploadAvatarToCloud(avatarUrl) {
     if (!app.cloud) return;
+
+    // 防御性 await：用户极快点击头像时，mycloud.init() 可能还没完成
+    if (app.cloudInitPromise) {
+      try { await app.cloudInitPromise; } catch (e) {}
+    }
+
+    if (!app.cloud || typeof app.cloud.uploadFile !== 'function') {
+      console.error('Cloud uploadFile API not available');
+      return;
+    }
+
     wx.showLoading({
       title: '头像上传中...'
     });

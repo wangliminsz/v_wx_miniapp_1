@@ -1,15 +1,4 @@
-<!-- 原生风格自定义导航栏 -->
-<view class="nav-bar" style="padding-top: {{safeAreaTop}}px;">
-  <view class="nav-bar-inner">
-    <view class="nav-bar-left" bindtap="onNavBack">
-      <view class="nav-back-icon"></view>
-    </view>
-    <view class="nav-bar-center">
-      <text class="nav-bar-title">采购车</text>
-    </view>
-    <view class="nav-bar-right"></view>
-  </view>
-</view>
+<custom-nav title="采购车" showBack="{{true}}" bgColor="#ffffff" bind:back="onNavBack"></custom-nav>
 
 <!-- 加载状态 -->
 <view wx:if="{{isLoading}}" class="loading-overlay">
@@ -22,7 +11,7 @@
 <block wx:elif="{{isLogin}}">
 
   <!-- EMPTY CART → NOW OUTSIDE, CAN ALIGN PERFECTLY -->
-  <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
+  <view class="empty-state" wx:if="{{cartItems.length === 0}}">
 
     <text class="empty-title">采购车是空的</text>
     <text class="empty-hint">快去添加商品吧</text>
@@ -31,7 +20,7 @@
   </view>
 
   <!-- NORMAL CONTENT -->
-  <view class="container" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:elif="{{cartItems.length > 0}}">
+  <view class="container" wx:elif="{{cartItems.length > 0}}">
 
 
     <!-- 同步状态提示 -->
@@ -100,7 +89,7 @@
 
 </block>
 
-<!-- style="padding-top: {{navBarHeight + safeAreaTop}}px;" -->
+<!-- -->
 <block wx:else>
   <view class="container_no_bottom_padding">
 
@@ -115,7 +104,7 @@
       </navigator>
     </view> -->
 
-    <view class="empty-state" style="padding-top: {{navBarHeight + safeAreaTop}}px;" wx:if="{{cartItems.length === 0}}">
+    <view class="empty-state" wx:if="{{cartItems.length === 0}}">
 
       <text class="empty-title">采购车是空的</text>
       <text class="empty-hint">快去添加商品吧</text>

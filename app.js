@@ -26,6 +26,8 @@ App({
   loginPromise: null,
   tokenPromise: null,
   initPromise: null,
+  // 云开发环境初始化 Promise —— 解决分享进入时 mine.js 调用 cloud.database() 比 mycloud.init() 快的竞态
+  cloudInitPromise: null,
 
   async onLaunch(options) {
 
@@ -88,7 +90,8 @@ App({
     this.getSystemInfo();
 
     // B2. 异步初始化云开发环境（不阻塞主登录流程）
-    this.initCloud();
+    // 必须把 init() 的 Promise 暴露出去，分享进入时 page 需 await 这个 Promise
+    this.cloudInitPromise = this.initCloud();
 
     // B3. 初始化购物车徽章（即使未登录也显示本地购物车数量）
     this.initCartBadge();
@@ -390,22 +393,32 @@ App({
   // ~~~~~~~~~~~ 系统工具初始化模块 ~~~~~~~~~~~
 
   initCloud() {
-    try {
-      const mycloud = new wx.cloud.Cloud({
-        resourceAppid: config.cloudAppId,
-        resourceEnv: config.cloudEnvId
-      });
+    // 关键：返回 Promise，让外部 await，确保 mycloud.init() 完成后再使用 app.cloud
+    return new Promise((resolve) => {
+      try {
+        const mycloud = new wx.cloud.Cloud({
+          resourceAppid: config.cloudAppId,
+          resourceEnv: config.cloudEnvId
+        });
 
-      mycloud.init().then(() => {
-        console.log('共享云环境初始化成功 ✔');
-      }).catch(err => {
-        console.error('初始化共享云失败 ❌', err);
-      });
+        // 先把实例挂到 this.cloud（这样 page 里 !app.cloud 防御逻辑不会误判），
+        // 但要靠 cloudInitPromise 来保证 init() 完成
+        this.cloud = mycloud;
 
-      this.cloud = mycloud;
-    } catch (e) {
-      console.error('云开发模块发生异常', e);
-    }
+        mycloud.init().then(() => {
+          console.log('共享云环境初始化成功 ✔');
+          resolve();
+        }).catch(err => {
+          console.error('初始化共享云失败 ❌', err);
+          // 即便 init 失败也要 resolve，避免页面永远卡住
+          resolve();
+        });
+      } catch (e) {
+        console.error('云开发模块发生异常', e);
+        // 出错也要 resolve，避免阻塞 page
+        resolve();
+      }
+    });
   },
 
   getSystemInfo() {
