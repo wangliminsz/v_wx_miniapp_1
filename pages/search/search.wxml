@@ -11,8 +11,8 @@
   <view class="search-bar">
     <view class="search-input-wrapper">
       <image src="/static/icons/search.png" mode="aspectFit" class="search-icon"></image>
-      <input type="text" class="search-input" value="{{searchKeyword}}" bindinput="onSearchInput"  placeholder=" 搜索型号/品牌/编码" bindconfirm="onSearchConfirm" focus />
-      <view class="search-cancel-btn" bindtap="onCancel">
+      <input type="text" class="search-input" value="{{searchKeyword}}" bindinput="onSearchInput" placeholder="搜索型号/品牌/编码" placeholder-style="color:#86909C" bindconfirm="onSearchConfirm" focus />
+      <view class="search-cancel-btn" wx:if="{{searchKeyword}}" bindtap="onCancel">
         <text class="cancel-icon">✕</text>
       </view>
     </view>

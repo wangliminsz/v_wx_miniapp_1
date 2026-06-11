@@ -371,21 +371,12 @@ Page({
     const productId = e.currentTarget.dataset.id;
     const productSlug = e.currentTarget.dataset.slug;
 
-    // 微信小程序审核要求：未登录用户点击 mock 商品，
-    // 不应跳转到真实商品页（会显示"商品不存在"），而是引导登录
     if (!app.globalData.isLogin) {
       const clickedItem = (this.data.products || []).find(p => p.id === productId);
       if (clickedItem && clickedItem.isMock) {
-        wx.showModal({
-          title: '请先登录',
-          content: '登录后即可查看商品详情',
-          confirmText: '去登录',
-          cancelText: '取消',
-          success: (res) => {
-            if (res.confirm) {
-              wx.switchTab({ url: '/pages/mine/mine' });
-            }
-          },
+        const collectionSlug = this.data.currentSlug || '';
+        wx.navigateTo({
+          url: `/pages/mock-variant/mock-variant?mockId=${encodeURIComponent(productId)}&collectionSlug=${encodeURIComponent(collectionSlug)}`,
         });
         return;
       }

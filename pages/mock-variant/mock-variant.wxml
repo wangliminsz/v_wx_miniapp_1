@@ -1,0 +1,70 @@
+<view class="container">
+  <view class="variant-content">
+
+    <view class="product-info">
+      <view class="product-header">
+        <text class="product-name">{{variant.name}}</text>
+        <!-- <text class="product-subtitle">{{variant.brand}}</text> -->
+        <view class="product-tags" wx:if="{{variant.options && variant.options.length > 0}}">
+          <view>
+            <text class="product-tag" wx:for="{{variant.options}}" wx:key="id">{{item.name}}</text>
+          </view>
+          <view>
+            <view class="price-section">
+              <text class="product-price-mock">登录后查看</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="flex justify-between">
+
+      </view>
+
+      <view style="height:20px;"></view>
+
+      <view class="quantity-section">
+        <text class="quantity-label">采购数量</text>
+        <view class="quantity-control">
+          <view class="quantity-btn minus" bindtap="onMinus">
+            <text>-</text>
+          </view>
+          <view class="quantity-input-wrap">
+            <input type="number" class="quantity-input" value="{{quantity}}" bindchange="onQuantityChange" />
+            <text class="quantity-unit">kg</text>
+          </view>
+          <view class="quantity-btn plus" bindtap="onPlus">
+            <text>+</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view style="height:0px;"></view>
+
+    <view class="product-images">
+      <view class="main-image-container">
+        <image wx:if="{{variant.image}}" src="{{variant.image}}" mode="aspectFit" class="main-image" />
+        <view wx:else class="no-image">
+          <text>暂无图片</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-bar">
+      <view class="action-icons">
+        <view class="action-icon-item" bindtap="goHome">
+          <image src="/static/tabbar/home-n.png" mode="aspectFit"></image>
+        </view>
+        <view class="action-icon-item cart-icon" bindtap="goToCart">
+          <image src="/static/tabbar/cart-n.png" mode="aspectFit"></image>
+        </view>
+      </view>
+      <view class="action-buttons">
+        <button class="btn-add-cart" bindtap="goToLogin">
+          Add Cart
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

@@ -54,7 +54,7 @@
   <!-- 操作按钮组（宽松大间距） -->
   <view class="btn-group" wx:if="{{!isLoading}}">
     <!-- <button class="btn-primary" bindtap="updateUserInfo2">注册/更新</button> -->
-    <button class="btn-primary" bindtap="updateUserInfo2">
+    <button class="btn-primary" bindtap="updateUserInfo2" disabled="{{!isLogin && !isAgreed}}">
       {{isLogin ? '更新信息' : '用户注册'}}
     </button>
     <!-- url="/pages/order-history/order-history" -->
@@ -64,8 +64,16 @@
 
   <!-- 底部协议 -->
   <view class="agreement" wx:if="{{!isLoading}}">
-    <navigator url="/pages/userAgreement/userAgreement" class="link">用户服务协议</navigator>
-    <view class="line"></view>
-    <navigator url="/pages/privacyPolicy/privacyPolicy" class="link">隐私政策</navigator>
+    <checkbox-group bindchange="checkboxChange" wx:if="{{!isLogin}}" class="agreement-checkbox">
+      <label class="agreement-label">
+        <checkbox value="agreed" checked="{{!!isAgreed}}" color="#165DFF"/>
+        <text class="agreement-text">我已阅读并同意</text>
+      </label>
+    </checkbox-group>
+    <view class="agreement-links">
+      <navigator url="/pages/userAgreement/userAgreement" class="link">用户服务协议</navigator>
+      <view class="line"></view>
+      <navigator url="/pages/privacyPolicy/privacyPolicy" class="link">隐私政策</navigator>
+    </view>
   </view>
 </view>

@@ -6,6 +6,7 @@
     "pages/mine/mine",
     "pages/mine/register",
     "pages/variant/variant",
+    "pages/mock-variant/mock-variant",
     "pages/search/search",
     "pages/address/address",
     "pages/checkout-shipping/checkout-shipping",

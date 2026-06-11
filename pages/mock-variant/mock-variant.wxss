@@ -1,0 +1,274 @@
+/* ========== 全局 ========== */
+
+.page {
+  background-color: #F2F3F5;
+  font-size: 28rpx;
+  line-height: 1.5;
+  color: #1D2129;
+}
+
+.container {
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding-top: 20rpx;
+  padding-bottom: 60rpx;
+}
+
+/* ========== 主体内容 ========== */
+.variant-content {
+  padding-top: 0;
+  background-color: #ffffff;
+}
+
+/* ========== 商品图片区 ========== */
+.product-images {
+  background-color: #ffffff;
+  margin: 0 0 4px;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.main-image-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.no-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #86909C;
+  font-size: 14px;
+}
+
+/* ========== 商品信息区 ========== */
+.product-info {
+  background-color: #ffffff;
+  margin: 0 16px 12px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #F2F3F5;
+}
+
+.product-header {
+  margin-bottom: 12px;
+}
+
+.product-name {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1D2129;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.product-subtitle {
+  display: block;
+  font-size: 14px;
+  color: #86909C;
+}
+
+.product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.product-tag {
+  background-color: #E8F4FF;
+  color: #165DFF;
+  font-size: 28rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+.price-section {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.product-price-mock {
+  font-size: 24rpx;
+  color: #86909C;
+  background-color: #F2F3F5;
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+/* ========== 数量选择区 ========== */
+.quantity-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px;
+  background-color: #F7F8FA;
+  border-radius: 8px;
+  margin: 0 16px 30px;
+  border: 1px solid #E5E6EB;
+}
+
+.quantity-label {
+  font-size: 14px;
+  color: #1D2129;
+  font-weight: 500;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #E5E6EB;
+}
+
+.quantity-btn {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #1D2129;
+  transition: all 0.2s ease;
+}
+
+.quantity-btn:active {
+  background-color: #F2F3F5;
+}
+
+.quantity-btn.minus {
+  border-right: 1rpx solid #E5E6EB;
+  border-radius: 8px 0 0 8px;
+}
+
+.quantity-btn.plus {
+  border-left: 1rpx solid #E5E6EB;
+  border-radius: 0 8px 8px 0;
+}
+
+.quantity-input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  min-width: 180rpx;
+}
+
+.quantity-input {
+  width: 120rpx;
+  text-align: center;
+  font-size: 14px;
+  color: #1D2129;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.quantity-unit {
+  font-size: 12px;
+  color: #86909C;
+  margin-left: 8rpx;
+}
+
+/* ========== 底部固定操作栏 ========== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+  border-top: 1px solid #F2F3F5;
+}
+
+.action-icons {
+  display: flex;
+  gap: 32rpx;
+}
+
+.action-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.action-icon-item image {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.action-icon-item text {
+  font-size: 12px;
+  color: #86909C;
+}
+
+.cart-icon {
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -12rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  background-color: #ff4757;
+  color: white;
+  font-size: 12px;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6rpx;
+}
+
+.action-buttons {
+  flex: 1;
+  margin-left: 32rpx;
+}
+
+.btn-add-cart {
+  width: 100%;
+  background-color: rgb(228, 228, 228);
+  color: #858585;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  height: 48px;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+}
+
+.btn-add-cart:active {
+  opacity: 0.9;
+}
+
+.btn-add-cart::after {
+  border: none;
+}

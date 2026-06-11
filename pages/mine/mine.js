@@ -14,6 +14,7 @@ Page({
     userMobileColor: '#707070',
     isLogin: false,
     isLoading: true,
+    isAgreed: false,
     companyInfo: '',
     invoiceInfo: ''
   },
@@ -265,7 +266,20 @@ Page({
     }
   },
 
+  checkboxChange(e) {
+    this.setData({
+      isAgreed: (e.detail.value && e.detail.value.length > 0)
+    });
+  },
+
   updateUserInfo2: function () {
+    if (!this.data.isLogin && !this.data.isAgreed) {
+      wx.showToast({
+        title: '请先勾选并同意用户协议',
+        icon: 'none'
+      });
+      return;
+    }
     wx.navigateTo({
       url: '/pages/mine/register'
     });

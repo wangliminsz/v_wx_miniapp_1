@@ -57,10 +57,9 @@
   </view>
 
   <!-- 协议勾选 -->
-  <view class="agreement-box">
+  <!-- <view class="agreement-box">
     <checkbox-group bindchange="checkboxChange">
       <label class="agreement-label">
-        <!-- <checkbox value="agreed" checked="{{isAgreed}}" color="#165DFF" /> -->
         <checkbox value="agreed" checked="{{!!isAgreed}}" 
           color="#165DFF"
           />
@@ -70,8 +69,10 @@
           <navigator url="/pages/privacyPolicy/privacyPolicy" class="agreement-link">《隐私政策》</navigator>
       </label>
     </checkbox-group>
-  </view>
+  </view> -->
 
+  
+  <view style="height: 24px;"></view>
   <!-- 提交按钮 -->
   <button class="submit-btn" bindtap="submitForm" disabled="{{!isAgreed}}">提交信息</button>
 </view>

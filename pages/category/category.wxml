@@ -10,7 +10,7 @@
   <view class="search-bar">
     <view class="search-input" bindtap="goToSearch">
       <image src="/static/icons/search.png" mode="aspectFit"></image>
-      <input type="text" placeholder="     搜索型号/品牌/编码" disabled placeholder-style="color:#86909C" />
+      <input type="text" placeholder="搜索型号/品牌/编码" disabled placeholder-style="color:#86909C" />
     </view>
   </view>
 

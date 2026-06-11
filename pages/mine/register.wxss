@@ -153,9 +153,10 @@ page {
   color: #fff;
   border-radius: 16rpx;
   font-size: 32rpx;
-  font-weight: 600;
+  font-weight: 500;
   border: none;
   box-shadow: 0 4rpx 12rpx rgba(22, 93, 255, 0.2);
+  padding: 26rpx;
 }
 
 /* 按钮默认样式清除 */

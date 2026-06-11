@@ -46,14 +46,20 @@ const config = {
 
   banners: [
     {
-      image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471765660-618-15.jpg',
+      image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471828632-72-1.jpg',
       title: '优涂工品',
       subtitle: '绮一舟粉末采购平台',
     },
     {
-      image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471828632-72-1.jpg',
+      image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1761471765660-618-15.jpg',
       title: '品质保证', 
-      subtitle: '优异性能 质量稳定',
+      subtitle: '性能优异 质量稳定',
+    },
+
+    {
+      image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1781167672594-608-hitech.jpg',
+      title: '',
+      subtitle: '',
     },
     // {
     //   image: 'https://bkkschool-1304214433.cos.ap-guangzhou.myqcloud.com/1769908625640-373-road26.jpg',

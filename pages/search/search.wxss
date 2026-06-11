@@ -67,6 +67,7 @@
 .search-input-wrapper input {
   flex: 1;
   margin-left: 12rpx;
+  padding-left: 0;
   font-size: 28rpx;
   color: #1D2129;
 }

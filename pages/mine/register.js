@@ -3,7 +3,7 @@ const config = require('../../config.js');
 
 Page({
   data: {
-    isAgreed: false,
+    isAgreed: true,
     fastapiUrl: config.fastapiUrl,
     userOpenId: '',
     userAvatarUrl: config.avatarImg || "/static/images/get_avatar.png",

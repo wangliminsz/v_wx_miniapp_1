@@ -76,17 +76,18 @@ Page({
 
     // 微信小程序审核要求：未登录用户搜索时引导登录
     if (!app.globalData.isLogin) {
-      wx.showModal({
-        title: '请先登录',
-        content: '登录后即可搜索商品',
-        confirmText: '去登录',
-        cancelText: '取消',
-        success: (res) => {
-          if (res.confirm) {
-            wx.switchTab({ url: '/pages/mine/mine' });
-          }
-        },
-      });
+      // wx.showModal({
+      //   title: '请先登录',
+      //   content: '登录后即可搜索商品',
+      //   confirmText: '去登录',
+      //   cancelText: '取消',
+      //   success: (res) => {
+      //     if (res.confirm) {
+      //       wx.switchTab({ url: '/pages/mine/mine' });
+      //     }
+      //   },
+      // });
+      wx.switchTab({ url: '/pages/mine/mine' });
       return;
     }
 
