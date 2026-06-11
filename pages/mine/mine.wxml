@@ -52,7 +52,7 @@
   </view>
 
   <!-- 操作按钮组（宽松大间距） -->
-  <view class="btn-group">
+  <view class="btn-group" wx:if="{{!isLoading}}">
     <!-- <button class="btn-primary" bindtap="updateUserInfo2">注册/更新</button> -->
     <button class="btn-primary" bindtap="updateUserInfo2">
       {{isLogin ? '更新信息' : '用户注册'}}
@@ -63,7 +63,7 @@
   </view>
 
   <!-- 底部协议 -->
-  <view class="agreement">
+  <view class="agreement" wx:if="{{!isLoading}}">
     <navigator url="/pages/userAgreement/userAgreement" class="link">用户服务协议</navigator>
     <view class="line"></view>
     <navigator url="/pages/privacyPolicy/privacyPolicy" class="link">隐私政策</navigator>
