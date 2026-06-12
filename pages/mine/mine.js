@@ -16,7 +16,8 @@ Page({
     isLoading: true,
     isAgreed: false,
     companyInfo: '',
-    invoiceInfo: ''
+    invoiceInfo: '',
+    channelCode: ''
   },
 
   returnToHome: function () {
@@ -54,7 +55,8 @@ Page({
 
     this.setData({
       userOpenId: openid,
-      isLogin: app.globalData.isLogin
+      isLogin: app.globalData.isLogin,
+      channelCode: app.globalData.activeChannelCode
     });
 
     if (openid) {
@@ -275,8 +277,9 @@ Page({
   updateUserInfo2: function () {
     if (!this.data.isLogin && !this.data.isAgreed) {
       wx.showToast({
-        title: '请先勾选并同意用户协议',
-        icon: 'none'
+        title: '请先勾选并同意《用户服务协议》《隐私政策》',
+        icon: 'none',
+        duration: 1200
       });
       return;
     }
@@ -343,6 +346,7 @@ Page({
                         nickname: '',
                         mobile: '',
                         userName: '',
+                        companyInfo: '',
                       }
                     });
                   }
@@ -362,8 +366,10 @@ Page({
               wx.removeStorageSync('nickname');
               wx.removeStorageSync('mobile');
               wx.removeStorageSync('userName');
+              wx.removeStorageSync('companyInfo');
               wx.removeStorageSync('vendure-auth-token');
               wx.removeStorageSync('last-auth-channel-token');
+              wx.removeStorageSync('last-auth-channel-code');
               
               // 立即更新当前页面数据
               this.setData({
@@ -372,6 +378,7 @@ Page({
                 userNickName: '',
                 userName: '',
                 userMobile: '',
+                companyInfo: '',
                 userInfoExist: false
               });
 

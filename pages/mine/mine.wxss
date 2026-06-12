@@ -148,7 +148,8 @@
   box-shadow: 0 2rpx 8rpx rgba(22, 93, 255, 0.15);
 }
 
-.btn-primary[disabled] {
+.btn-primary[disabled],
+.btn-primary.is-disabled {
   height: 88rpx;
   color: #4e5969 !important;
   border-radius: 16rpx;
@@ -156,6 +157,14 @@
   font-weight: 500;
   border: 1rpx solid #E5E6EB;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.05);
+  background-color: #F7F8FA;
+}
+
+/* 启用态点击反馈（高亮） */
+.btn-primary-active {
+  background-color: #0E42D2 !important;
+  color: #fff !important;
+  box-shadow: 0 2rpx 8rpx rgba(14, 66, 210, 0.25) !important;
 }
 
 /* 次要按钮：规范样式 */

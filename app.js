@@ -5,6 +5,7 @@ App({
   globalData: {
 
     activeChannelToken: "",
+    activeChannelCode: "",
     lastChannelToken: "",
 
     userInfo: null,
@@ -69,7 +70,7 @@ App({
     // 2026-05-23 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // A1. 安全获取渠道 code
-    let channelCode = "__default_channel__";
+    let channelCode = "blank_channel";
 
     if (options && options.query && options.query.channel) {
       channelCode = options.query.channel;
@@ -158,6 +159,7 @@ App({
           try {
             const token = res.data.data.getChannelTokenByCode.token;
             this.globalData.activeChannelToken = token;
+            this.globalData.activeChannelCode = code;
           } catch (e) {
             console.error("获取渠道失败");
           }
@@ -181,6 +183,7 @@ App({
     if (token && lastChannel !== currentChannel) {
       console.warn('【安全警报】检测到渠道切换！正在强制熔断并清理旧渠道 Token，防止跨渠道污染...');
       wx.removeStorageSync('vendure-auth-token');
+      wx.removeStorageSync('last-auth-channel-code');
       wx.removeStorageSync('last-auth-channel-token');
       // 强制把 token 设为 null，直接跳过步骤1，逼他去走步骤2和3重新核销或判别
       return this.proceedToGetOpenId();
@@ -221,6 +224,7 @@ App({
 
     if (isRegisteredUser) {
       // 🔑 记住：只要登录成功，就必须把当前的渠道标记死死锁住！
+      wx.setStorageSync('last-auth-channel-code', this.globalData.activeChannelCode);
       wx.setStorageSync('last-auth-channel-token', this.globalData.activeChannelToken);
       this.globalData.lastChannelToken = this.globalData.activeChannelToken; // 同步写入内存
       this.setLoginStatus(true);

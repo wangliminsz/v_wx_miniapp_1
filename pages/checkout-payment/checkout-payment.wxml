@@ -55,7 +55,7 @@
     <!-- 确认订单 -->
     <view class="flex flow-row justify-center">
 
-      <view class="submit-section" wx:if="{{activeOrder && !isExpired}}">
+      <view class="submit-section" style="margin-right: 40rpx;" wx:if="{{activeOrder && !isExpired}}">
         <button class="submit-btn {{isConfirming ? 'submitting' : ''}}" bindtap="confirmOrder" disabled="{{isConfirming}}">
           <text wx:if="{{isConfirming}}">处理中...</text>
           <text wx:else>确认订单</text>

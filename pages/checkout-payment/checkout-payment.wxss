@@ -334,12 +334,12 @@ page {
    提交按钮（与 checkout-shipping 完全一致）
 ============================== */
 .submit-section {
-  padding: 16rpx 0;
+  padding: 20rpx 0;
   margin-top: 15px;
 }
 
 .submit-btn {
-  width: 100%;
+  width: 100% !important;
   min-height: 88rpx;
   background: #165DFF;
   color: #fff;
