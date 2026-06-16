@@ -1,5 +1,8 @@
 const config = require('./config.js');
 
+// 持久化 key：渠道 code（首次扫码获取后永久保存，作为后续从"最近使用"等无参场景的兜底）
+const STORAGE_KEY_CHANNEL = 'app_persisted_channel';
+
 App({
 
   globalData: {
@@ -7,6 +10,14 @@ App({
     activeChannelToken: "",
     activeChannelCode: "",
     lastChannelToken: "",
+
+    // 记录当前生效的渠道 code，用于 onShow 中去重判断
+    // （防止 tabBar 切换等场景反复触发 handleChannel）
+    currentChannel: "",
+
+    // 最近一次启动参数（来自 onLaunch/onShow/wx.getEnterOptionsSync），
+    // 供其他模块按需消费
+    lastEnterOptions: null,
 
     userInfo: null,
     openid: '',
@@ -31,6 +42,12 @@ App({
   cloudInitPromise: null,
 
   async onLaunch(options) {
+
+    // // 2026-06-13
+    // // Enable debug panel, valid for production version too
+    // wx.setEnableDebug({
+    //   enableDebug: true
+    // })
 
 
 
@@ -70,11 +87,52 @@ App({
     // 2026-05-23 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // A1. 安全获取渠道 code
+    // 优先级：① 当前启动 options.query.channel（扫码/分享/卡片带参）
+    //         ② wx.getEnterOptionsSync().query.channel（onLaunch 兜底，热启动某些场景可能拿到）
+    //         ③ wx.getStorageSync(STORAGE_KEY_CHANNEL)（持久化 - 首次扫码参数永久生效）
+    //         ④ 默认 "blank_channel"
     let channelCode = "blank_channel";
 
     if (options && options.query && options.query.channel) {
       channelCode = options.query.channel;
+    } else {
+      try {
+        const enterOpts = wx.getEnterOptionsSync && wx.getEnterOptionsSync();
+        if (enterOpts && enterOpts.query && enterOpts.query.channel) {
+          channelCode = enterOpts.query.channel;
+        } else {
+          // 兜底：从本地存储读取（首次扫码参数永久保存）
+          const persisted = wx.getStorageSync(STORAGE_KEY_CHANNEL);
+          if (persisted && persisted.code) {
+            channelCode = persisted.code;
+            console.log('[channel] 从本地存储恢复渠道:', channelCode);
+          }
+        }
+      } catch (e) {
+        // getEnterOptionsSync 失败也不影响
+        console.warn('[channel] getEnterOptionsSync failed:', e);
+        const persisted = wx.getStorageSync(STORAGE_KEY_CHANNEL);
+        if (persisted && persisted.code) {
+          channelCode = persisted.code;
+        }
+      }
     }
+
+    // 🔑 持久化：如果本次启动带新 channel，写入存储（首次扫码后从"最近使用"进入也能拿到）
+    if (channelCode !== "blank_channel") {
+      try {
+        wx.setStorageSync(STORAGE_KEY_CHANNEL, {
+          code: channelCode,
+          updatedAt: Date.now(),
+        });
+      } catch (e) {
+        console.warn('[channel] setStorage failed:', e);
+      }
+    }
+
+    // 记录冷启动时的渠道与启动参数，供 onShow 去重与全模块消费
+    this.globalData.currentChannel = channelCode;
+    this.globalData.lastEnterOptions = options || null;
 
     // A2. 调用你自定义的接口，安全获取当前渠道 token
     await this.getChannelToken(channelCode);
@@ -110,6 +168,94 @@ App({
 
     // 全局初始化完成 (渠道 token 已获取)，resolve initPromise
     resolveInitPromise();
+  },
+
+  // ============= 渠道参数兜底：onShow + wx.getEnterOptionsSync =============
+  // 解决从「最近使用」「顶部菜单」「后台切回」等热启动场景下丢失 channel 的问题。
+  // onLaunch 只在冷启动触发一次，从最近使用列表进入属于热启动，
+  // 微信不重新派发 onLaunch.options，但 onShow 一定会触发。
+  // 三级保险：onShow(options) 优先 → wx.getEnterOptionsSync() 兜底 → 本地存储兜兜底
+  onShow(options) {
+
+    console.log('onShow 热启动 --->>>>> ', options)
+
+    // 1) 优先用 onShow 传入的 options（冷启动/分享/扫码 等场景）
+    // 2) 兜底用 wx.getEnterOptionsSync()（最近使用列表等热启动场景 onShow options 可能为空）
+    let enterOptions = options;
+    if (!enterOptions || !enterOptions.query || !enterOptions.query.channel) {
+      try {
+        enterOptions = wx.getEnterOptionsSync();
+      } catch (e) {
+        // 某些低版本基础库可能不支持，记一个 warn 即可
+        console.warn('wx.getEnterOptionsSync() failed:', e);
+      }
+    }
+
+    // 把最近一次启动参数写入 globalData，方便其他模块消费
+    if (enterOptions) {
+      this.globalData.lastEnterOptions = enterOptions;
+      // 同步给本地测试接口，便于 mock 启动参数
+      try {
+        wx.setStorageSync('lastEnterOptions', enterOptions);
+      } catch (e) {}
+    }
+
+    // 计算当前 channel（三级 fallback）
+    let newChannel = enterOptions && enterOptions.query && enterOptions.query.channel;
+    if (!newChannel) {
+      // 兜兜底：从持久化存储读取（首次扫码的 channel 永久生效）
+      try {
+        const persisted = wx.getStorageSync(STORAGE_KEY_CHANNEL);
+        if (persisted && persisted.code) {
+          newChannel = persisted.code;
+          console.log('[channel] onShow 从本地存储恢复渠道:', newChannel);
+        }
+      } catch (e) {}
+    }
+
+    // 只有当真的有 channel 参数，且与当前不同时才处理（避免 tabBar 切换等场景反复触发）
+    if (newChannel && newChannel !== this.globalData.currentChannel) {
+      console.log('onShow 检测到新渠道:', newChannel);
+      this.globalData.currentChannel = newChannel;
+      // 持久化新渠道
+      try {
+        wx.setStorageSync(STORAGE_KEY_CHANNEL, {
+          code: newChannel,
+          updatedAt: Date.now(),
+        });
+      } catch (e) {}
+      // 异步获取新渠道 token，不阻塞 onShow 其它逻辑
+      this.getChannelToken(newChannel);
+    } else {
+      console.log('onShow 渠道未变化（或无 channel），跳过。currentChannel=', this.globalData.currentChannel);
+    }
+  },
+
+  // 可选：手动刷新渠道参数（供其他模块按需调用，例如在某个页面入口主动拉取最新）
+  refreshChannelFromEnterOptions() {
+    try {
+      const enterOptions = wx.getEnterOptionsSync();
+      const channel = enterOptions && enterOptions.query && enterOptions.query.channel;
+      if (channel && channel !== this.globalData.currentChannel) {
+        this.globalData.currentChannel = channel;
+        this.globalData.lastEnterOptions = enterOptions;
+        this.getChannelToken(channel);
+      }
+    } catch (e) {
+      console.warn('refreshChannelFromEnterOptions failed:', e);
+    }
+  },
+
+  // 测试辅助：清除持久化的 channel（重置后下次启动会回退到 "blank_channel"）
+  // 调用方式：getApp().clearPersistedChannel()
+  clearPersistedChannel() {
+    try {
+      wx.removeStorageSync(STORAGE_KEY_CHANNEL);
+      this.globalData.currentChannel = "blank_channel";
+      console.log('[channel] 已清除持久化渠道，重置为 blank_channel');
+    } catch (e) {
+      console.warn('clearPersistedChannel failed:', e);
+    }
   },
 
 

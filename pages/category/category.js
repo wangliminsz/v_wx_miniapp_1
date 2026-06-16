@@ -39,7 +39,10 @@ Page({
 
     this.setData({
       isLogin: app.globalData.isLogin,
-      isLoading: false
+      isLoading: false,
+      // 关键：初始就把 loading 设为 true，避免空状态短暂闪现
+      // loadProductsBySlug 完成后才会在 finally 中把 loading 置回 false
+      loading: true
     }, () => {
       this.loadCategories();
     });
@@ -353,7 +356,8 @@ Page({
       products: [],
       currentPage: 0,
       hasMore: true,
-      loading: false,
+      // 切分类时立刻设 loading: true，避免空状态闪烁
+      loading: true,
     });
 
     this.loadProductsBySlug(category.slug);

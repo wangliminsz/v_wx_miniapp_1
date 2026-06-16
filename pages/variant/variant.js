@@ -11,19 +11,40 @@ Page({
     error: null,
     currentImageIndex: 0,
     images: [],
-    quantity: 100,
+    quantity: 200,
     addToCartError: null,
     isAddingToCart: false,
     isLogin: false,
     cartCount: 0,
     techDocs: [],
     techDocsWithIcons: [],
+    // 🔑 锁定的 base 价（首次 fetch 缓存），用于 variant 详情页展示。
+    // 避免后端 PriceCalculationStrategy 随 activeOrder 数量变化重新计算 priceWithTax。
+    // 购物车仍使用 line.linePriceWithTax（context-dependent）显示真实计算价。
+    basePriceWithTax: 0,
+    // 后端 dynamic tier 规则（JSON 字符串），
+    // 形如 '[{"minQuantity": 1, "rate": 1.10}, {"minQuantity": 200, "rate": 1.00}]'
+    volumePrices: '',
+    // 🔑 是否为团购/集团价（后端 custom field）
+    // true 时不展示阶梯价说明（按后端业务规则：团购一口价，不显示阶梯）
+    isGroupPrice: false,
+    // 🔑 根据 quantity 动态计算出的展示价（元，含税）
+    // 公式：displayPriceWithTax = basePriceWithTax × tier.rate
+    displayPriceWithTax: 0,
+    // 解析后的 tier 列表（升序），用于在 UI 上显示阶梯价说明
+    tierList: [],
+    // 🔑 预计算的 tier 展示列表（包含 range 文本 + 整数化价格），WXML 直接渲染
+    // 格式：[{ lower, upper, rangeText, price }, ...]
+    //   例: [{lower: 1, upper: 200, rangeText: "1-200", price: 30.8},
+    //        {lower: 200, upper: 500, rangeText: "200-500", price: 28},
+    //        {lower: 500, upper: null, rangeText: "500-", price: 25.2}]
+    tierDisplayList: [],
   },
 
   onLoad(options) {
     console.log('variant onLoad options:', options);
 
-    this.setData({ quantity: 100 }, ()=>{
+    this.setData({ quantity: 200 }, ()=>{
       console.log('quantity------------------------------>', this.data.quantity)
     })
     
@@ -92,9 +113,14 @@ Page({
               id
               name
               sku
+              price
               priceWithTax
               currencyCode
               stockLevel
+              isGroupPrice
+              customFields {
+                volumePrices
+              }
               featuredAsset {
                 id
                 preview
@@ -144,9 +170,14 @@ Page({
                 id
                 name
                 sku
+                price
                 priceWithTax
                 currencyCode
                 stockLevel
+                isGroupPrice
+                customFields {
+                  volumePrices
+                }
                 featuredAsset {
                   id
                   preview
@@ -259,6 +290,44 @@ Page({
       icon: this.getIcon(doc.name || doc.preview || '')
     }));
 
+    // 🔑 关键：锁死 variant 详情页的"展示价"为首次 fetch 的 base 价
+    // 原因：Vendure 的 ProductVariant.priceWithTax 是 context-dependent 的，
+    //      会根据 activeOrder 中该变体的数量重新计算（tiered pricing）。
+    //      H5 的做法：不重新 fetch → 价格停留 base 价。
+    //      wx miniapp 的做法：把首次 fetch 的 priceWithTax 缓存为 basePriceWithTax，
+    //                        任何后续 setData / 重新 fetch 都不会覆盖该值。
+    // 购物车页面继续使用 line.linePriceWithTax（context-dependent），不受影响。
+    const basePriceWithTax = variant.priceWithTax;
+
+    // 解析后端 dynamic tier 规则
+    // volumePrices 是 ProductVariant 的 custom field（Vendure 3.6.x 一律要走 customFields.xxx）
+    // 后端配置：
+    //   ProductVariant: [{ name: 'volumePrices', type: 'string', public: true, ... }]
+    // volumePrices 形如 '[{"minQuantity": 1, "rate": 1.10}, {"minQuantity": 200, "rate": 1.00}]'
+    const volumePrices = (variant.customFields && variant.customFields.volumePrices) || '';
+    // isGroupPrice 是 ProductVariant 顶层字段（后端直接加的 entity field，不是 custom field）
+    const isGroupPrice = !!variant.isGroupPrice;
+
+    // 🔑 关键分支：isGroupPrice=true 时走"一口价"逻辑
+    //   - 不解析 tier 规则
+    //   - 不按 quantity 计算展示价
+    //   - 直接用后端的 basePriceWithTax
+    //   - 不渲染阶梯价提示
+    let tierList;
+    let displayPriceWithTax;
+    let tierDisplayList;
+    if (isGroupPrice) {
+      tierList = [];
+      displayPriceWithTax = basePriceWithTax;
+      tierDisplayList = [];
+    } else {
+      tierList = this.parseVolumePrices(volumePrices);
+      const defaultQuantity = 200;
+      displayPriceWithTax = this.calcDisplayPrice(basePriceWithTax, volumePrices, defaultQuantity);
+      // 预计算展示用 tier 列表（区间文本 + 整数化价格），WXML 直接渲染，避免浮点
+      tierDisplayList = this.buildTierDisplayList(tierList, basePriceWithTax);
+    }
+
     this.setData({
       variant: variantData,
       product: product,
@@ -266,12 +335,112 @@ Page({
       techDocs: techDocs,
       techDocsWithIcons: techDocsWithIcons,
       loading: false,
-      quantity: 100,
+      quantity: 200,
+      basePriceWithTax: basePriceWithTax,
+      volumePrices: volumePrices,
+      isGroupPrice: isGroupPrice,
+      tierList: tierList,
+      tierDisplayList: tierDisplayList,
+      displayPriceWithTax: displayPriceWithTax,
     });
 
     wx.setNavigationBarTitle({
       title: variant.name || '商品详情',
     });
+  },
+
+  /**
+   * 解析后端 volumePrices 自定义字段（JSON 字符串）
+   * 返回按 minQuantity 升序的 tier 数组，便于 UI 展示阶梯价说明
+   * @param {string} volumePricesJson
+   * @returns {Array<{minQuantity: number, rate: number}>}
+   */
+  parseVolumePrices(volumePricesJson) {
+    if (!volumePricesJson || typeof volumePricesJson !== 'string') {
+      return [];
+    }
+    try {
+      const arr = JSON.parse(volumePricesJson);
+      if (!Array.isArray(arr)) return [];
+      // 过滤 + 标准化
+      const cleaned = arr
+        .filter(t => t && typeof t.minQuantity === 'number' && typeof t.rate === 'number')
+        .map(t => ({ minQuantity: t.minQuantity, rate: t.rate }))
+        .sort((a, b) => a.minQuantity - b.minQuantity);
+      return cleaned;
+    } catch (e) {
+      console.warn('parseVolumePrices failed:', e);
+      return [];
+    }
+  },
+
+  /**
+   * 根据当前 basePriceWithTax 和已解析的 tierList，生成 UI 用的展示列表
+   * 输出形如:
+   *   [
+   *     { lower: 1,   upper: 200, rangeText: "1-200",   price: 30.8 },
+   *     { lower: 200, upper: 500, rangeText: "200-500", price: 28   },
+   *     { lower: 500, upper: null, rangeText: "500-",   price: 25.2 },
+   *   ]
+   * 用整数算术 + Math.round 避免 IEEE 754 浮点误差
+   *   (如 2800 * 1.10 = 3080.0000000000005，需 round 到 3080)
+   *
+   * @param {Array<{minQuantity: number, rate: number}>} tierList
+   * @param {number} basePriceWithTax base 价（cents）
+   * @returns {Array<{lower: number, upper: number|null, rangeText: string, price: number}>}
+   */
+  buildTierDisplayList(tierList, basePriceWithTax) {
+    if (!tierList || tierList.length === 0 || !basePriceWithTax) {
+      return [];
+    }
+    return tierList.map((tier, idx) => {
+      const isLast = idx === tierList.length - 1;
+      const upper = isLast ? null : tierList[idx + 1].minQuantity;
+      // 整数算术：用 Math.round 把 IEEE 754 误差收掉
+      const priceCents = Math.round(basePriceWithTax * tier.rate);
+      const price = priceCents / 100;
+      // 区间文本：最后一段用 `${min}-` 表示无上限
+      const rangeText = upper === null
+        ? `${tier.minQuantity}-`
+        : `${tier.minQuantity}-${upper}`;
+      return {
+        lower: tier.minQuantity,
+        upper: upper,
+        rangeText: rangeText,
+        price: price,
+      };
+    });
+  },
+
+  /**
+   * 根据当前 quantity 计算展示价（含税）
+   * 公式：displayPriceWithTax = basePriceWithTax × tier.rate
+   * 其中 tier 为「最后一个 quantity >= minQuantity」的那条
+   *
+   * @param {number} basePriceWithTax 后端返回的 base 价（首次 fetch 锁定）
+   * @param {string} volumePricesJson 后端 tier 规则 JSON
+   * @param {number} quantity 当前用户输入的数量
+   * @returns {number} 展示价（含税，单位：分）
+   */
+  calcDisplayPrice(basePriceWithTax, volumePricesJson, quantity) {
+    if (!basePriceWithTax || basePriceWithTax <= 0) {
+      return 0;
+    }
+    const tiers = this.parseVolumePrices(volumePricesJson);
+    if (tiers.length === 0) {
+      // 没有规则就显示 base 价
+      return basePriceWithTax;
+    }
+    // 找到最后一个 quantity >= minQuantity 的 tier
+    let rate = tiers[0].rate;  // fallback to first tier
+    for (let i = 0; i < tiers.length; i++) {
+      if (quantity >= tiers[i].minQuantity) {
+        rate = tiers[i].rate;
+      } else {
+        break;
+      }
+    }
+    return Math.round(basePriceWithTax * rate);
   },
 
   onPreviousImage() {
@@ -303,7 +472,18 @@ Page({
 
   onMinus() {
     if (this.data.quantity > 1) {
-      this.setData({ quantity: this.data.quantity - 1 });
+      const newQuantity = this.data.quantity - 1;
+      this.setData({
+        quantity: newQuantity,
+        // 🔑 isGroupPrice=true 时（一口价/团购），价格不变
+        displayPriceWithTax: this.data.isGroupPrice
+          ? this.data.basePriceWithTax
+          : this.calcDisplayPrice(
+              this.data.basePriceWithTax,
+              this.data.volumePrices,
+              newQuantity
+            ),
+      });
     }
   },
 
@@ -316,13 +496,34 @@ Page({
       });
       return;
     }
-    this.setData({ quantity: this.data.quantity + 1 });
+    const newQuantity = this.data.quantity + 1;
+    this.setData({
+      quantity: newQuantity,
+      // 🔑 isGroupPrice=true 时（一口价/团购），价格不变
+      displayPriceWithTax: this.data.isGroupPrice
+        ? this.data.basePriceWithTax
+        : this.calcDisplayPrice(
+            this.data.basePriceWithTax,
+            this.data.volumePrices,
+            newQuantity
+          ),
+    });
   },
 
   onQuantityChange(e) {
     const quantity = parseInt(e.detail.value) || 1;
     if (quantity > 0) {
-      this.setData({ quantity });
+      this.setData({
+        quantity: quantity,
+        // 🔑 isGroupPrice=true 时（一口价/团购），价格不变
+        displayPriceWithTax: this.data.isGroupPrice
+          ? this.data.basePriceWithTax
+          : this.calcDisplayPrice(
+              this.data.basePriceWithTax,
+              this.data.volumePrices,
+              quantity
+            ),
+      });
     }
   },
 

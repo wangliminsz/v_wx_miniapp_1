@@ -54,20 +54,44 @@
 
       <view class="flex justify-between">
         <view class="price-section">
-          <text class="product-price">¥ {{variant.priceWithTax / 100}} 元/kg</text>
+          <!-- 🔑 关键：使用 displayPriceWithTax（由 basePriceWithTax × 当前 quantity 对应 tier 的 rate 计算得出）
+               而不是 variant.priceWithTax（context-dependent，会随 cart 数量变化）。
+               保持与 H5 一致：variant 详情页显示基于 quantity 的 tiered 价，cart 显示 context-dependent 计算价。 -->
+          <text class="product-price">¥ {{displayPriceWithTax / 100}} 元/kg</text>
+          <!-- 阶梯价规则说明（从后端 volumePrices 动态渲染 + 预计算区间文本 + 整数化价格）
+               isGroupPrice=true（团购/集团价）时不显示阶梯，按一口价处理 -->
+          <view class="tier-hint" wx:if="{{!isGroupPrice && tierDisplayList.length > 0}}">
+            <view>
+              <view style="height: 5px;"></view>
+              <view>阶梯价格说明：</view>
+              <view>
+                <text class="" wx:for="{{tierDisplayList}}" wx:key="lower">
+                  {{item.rangeText}}: ¥ {{item.price}} /kg
+                </text>
+              </view>
+            </view>
+          </view>
+          <!-- 团购/集团价说明（一口价模式下的占位说明） -->
+          <view class="tier-hint group-hint" wx:elif="{{isGroupPrice}}">
+            <view>
+              <view style="height: 5px;"></view>
+              <!-- <view>团购价格说明：</view> -->
+              <view class="group-hint-text">VIP 尊享优惠</view>
+            </view>
+          </view>
         </view>
 
         <!-- <view class="meta-section"> -->
         <!-- {{variant.stockLevel}} -->
-          <!-- <text wx:if="{{variant.sku}}" class="product-sku">{{variant.sku}}</text> -->
-          <!-- <text class="stock-status {{getStockLevelClass(variant.stockLevel)}}"> -->
-            <!-- {{getStockLevelText(variant.stockLevel)}} -->
-          <!-- </text> -->
+        <!-- <text wx:if="{{variant.sku}}" class="product-sku">{{variant.sku}}</text> -->
+        <!-- <text class="stock-status {{getStockLevelClass(variant.stockLevel)}}"> -->
+        <!-- {{getStockLevelText(variant.stockLevel)}} -->
+        <!-- </text> -->
         <!-- </view> -->
       </view>
 
       <view style="height:20px;"></view>
- 
+
 
       <view class="quantity-section">
         <text class="quantity-label">采购数量</text>
@@ -119,7 +143,7 @@
 
     <view style="height:0px;"></view>
 
-     <!-- 商品图片区 -->
+    <!-- 商品图片区 -->
     <view class="product-images">
       <view class="main-image-container">
         <image wx:if="{{images.length > 0}}" src="{{images[currentImageIndex].preview}}" mode="aspectFit" class="main-image" lazy-load />

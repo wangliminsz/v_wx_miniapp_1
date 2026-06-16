@@ -1,0 +1,63 @@
+in my vendure 3.6.3 db, I has 3 custom fields in ProductVariant table,
+
+
+        ProductVariant: [
+            
+          {
+            name: 'priceByLayer',
+            type: 'string', // 里面存储 JSON 字符串，例如: '{"group_1": 8500, "group_2": 6000}'
+            public: true,   // 🎯 核心：允许小程序免管理权限直接读取
+            ui: { component: 'json-editor' }, // 方便在管理后台直接用 JSON 浏览器编辑
+          },
+
+
+          {
+              name: 'volumePrices',
+              type: 'string',
+              public: true,
+          },
+
+          {
+              name: 'volumePricesPerChannel',
+              type: 'string', // 存储 JSON 字符串
+              public: true,   // 允许 Shop API 读取
+          },
+		  
+		  
+
+volumePrices format:
+
+[{"minQuantity": 1, "rate": 1.10}, {"minQuantity": 200, "rate": 1.00}]
+
+
+volumePricesPerChannel format:
+
+{"the-channel-token-xinyk": "close"}
+
+{"the-channel-token-xinyk": [{"minQuantity": 1,"rate": 1.2},{"minQuantity": 10,"rate": 1.1},{"minQuantity": 20,"rate": 0.8}]}
+
+
+"the-channel-token-xinyk" is the channel token, (not channel code)
+
+
+the rule is:
+
+~~~~~~~~~~~~~
+
+first check the volumePricesPerChannel:
+
+if it's 'close', then please don't use tier price for this channel, and use the base/standard price (even volumePrices has value),
+
+if it has value, then use it to calculate the tier price,
+
+if it has no value, 
+
+then check volumePrices: use it to calculate the tier price  (currently already done)
+
+
+~~~~~~~~~~~~~
+
+price from "priceByLayer" not calculate, but just use it directly (currently already done)
+
+if no these fields, just use base/standard price (currently already done)
+

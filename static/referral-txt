@@ -1,0 +1,228 @@
+
+
+
+
+
+
+小程序技术问题。启动参数，区分是哪个channel的？再次从 “使用过的小程序列表”进去的时候，他就不带参数了
+
+
+我非得带参数才能够进到我的channel里
+
+
+~～~~~~~~~~~~
+
+
+这是一个非常经典的小程序开发问题，你遇到的现象完全正确。
+
+
+原因很简单： 你的参数是在 onLoad 里取的，而从“最近使用”列表重新打开时，页面实例还在后台存着，onLoad 根本不会重新执行。所以你的 channel 参数就丢了。
+
+
+---
+
+
+解决方案（两种主流做法）
+
+
+方案一：在 onShow 里也取参数（推荐）
+
+
+onShow 在小程序从后台切到前台每次都会执行。
+
+
+```javascript
+Page({
+  // 存放当前的 channel 值
+  currentChannel: '',
+
+
+  onLoad(options) {
+    // 冷启动时取一次
+    this.handleChannel(options);
+  },
+
+
+  onShow(options) {
+    // 关键：热启动时也能拿到参数
+    // 这里的 options 和 onLoad 里的结构是一样的
+    this.handleChannel(options);
+  },
+
+
+  handleChannel(options) {
+    if (options.channel) {
+      this.currentChannel = options.channel;
+      // 用 channel 做你想做的事
+      console.log('当前 channel:', options.channel);
+    }
+  }
+})
+```
+
+
+方案二：不使用页面参数，改用全局缓存
+
+
+在你确定 channel 的入口处（比如扫码进来的那个页面），直接把 channel 存进 wx.setStorageSync，后续所有页面都用缓存里的值。
+
+
+```javascript
+// 入口页面（扫码进来的那个页面）
+onLoad(options) {
+  if (options.channel) {
+    wx.setStorageSync('userChannel', options.channel);
+  }
+}
+
+
+// 任何需要用到 channel 的地方
+const channel = wx.getStorageSync('userChannel') || '默认值';
+```
+
+
+两种方案的适用场景
+
+
+方案 适用场景
+onShow 取参 channel 只影响当前页面，且可能在同一会话中多次变化
+Storage 缓存 channel 需要被多个页面共用，或者需要持久化（即使小程序被杀掉再打开，也能记住）
+
+
+为什么会有这个“坑”？
+
+
+你之前用英文工作，可能没怎么翻过微信官方文档——但这个问题文档里其实有提：
+
+
+微信小程序的页面生命周期中，onLoad 只在页面初次创建时执行一次。从“最近使用”列表点进来，属于“热启动”，页面实例没有被销毁，所以 onLoad 不会再跑。
+
+
+文档建议的做法是：在 onShow 里通过 wx.getEnterOptionsSync() 获取启动参数，这和 onShow(options) 参数里的内容是一样的。
+
+
+一个小建议
+
+
+如果你希望“从最近使用列表进来能自动识别 channel”，但又不希望在每次 onShow 里都重复执行（因为页面切换也会触发 onShow），可以加一个防重复的判断：
+
+
+```javascript
+onShow(options) {
+  // 只有当真的有 channel 参数时才处理
+  if (options.channel && options.channel !== this.currentChannel) {
+    this.handleChannel(options);
+  }
+}
+```
+
+
+这个问题在开发者社区被讨论过很多次，很多人跟你一样被坑过，所以不是你代码写得有问题——是微信这套生命周期设计确实不够直观。
+
+
+用方案一改一下，几行代码就能解决。改完之后，不管用户是从哪里进来的，channel 都不会丢了。
+
+
+
+
+
+
+你这个问题的技术敏锐度很高——为什么微信能缓存页面实例，却不缓存启动参数？
+
+
+---
+
+
+微信的设计逻辑
+
+
+从技术设计角度，这件事微信是这样想的：
+
+
+1. 冷启动 vs 热启动 是完全不同的“入口”
+
+
+· 冷启动：小程序第一次打开，或者被系统完全销毁后重新打开。这时微信不知道你要去哪个页面，所以需要一个“入口信息”（即 options），告诉小程序该去哪儿。这个入口来源可以是：扫码、公众号菜单、分享卡片、App跳转等。
+· 热启动：从“最近使用”列表或后台切回来时，用户并没有提供新的入口信息。用户的行为是“回到之前的页面”，而不是“发起一个新请求”。所以微信的逻辑是：用户说要回去，那我就帮你回到刚才的地方。
+
+
+2. 页面实例缓存了页面状态，但没缓存“入口参数”
+
+
+· 页面实例确实被缓存了——它的 data、页面栈、滚动位置等都被保留，这是为了保持用户体验的连续性。
+· 但 onLoad(options) 的 options 属于入口信息，不是页面状态的一部分。微信认为：入口信息只在发起进入行为的那一刻有效，进入之后就没用了。
+· 热启动时没有新的“发起进入行为”，所以微信不会重新给 options。
+
+
+简单说，微信把两种行为区分开了：
+
+
+· “从某个渠道打开小程序” → 携带入口参数
+· “切回之前用过的页面” → 不带参数，只恢复页面状态
+
+
+为什么你会觉得“参数也在后台存着”？
+
+
+你的逻辑直觉是对的——从你（开发者）的视角看，启动参数和数据一样，都是信息，为什么不一起存？
+
+
+但微信的设计哲学不是这样：
+
+
+1. 启动参数本质上是外部传入的临时指令（从哪里来、要去哪个频道），不是小程序内部的状态数据
+2. 热启动从“最近使用”进来，用户意图是回到之前的页面保持原样，不应该携带新参数覆盖原有的上下文
+3. 如果页面缓存的时候也缓存 options，那热启动时会读到旧的 options，这会造成更混乱的情况
+
+
+从社区反馈看，这个逻辑确实坑了很多人。甚至有开发者直接在社区质问“为什么清理缓存后从顶部进入会丢失参数”，官方回复是：从顶部进入小程序，你该用哪个码的参数呢？答案是没有任何参数。
+
+
+社区里的解法
+
+
+这个问题在开发者社区反复被问，最后公认的解决方案就是：
+
+
+不要只在 onLaunch/onLoad 里取参数，要在 onShow 里也取，并且用 wx.getEnterOptionsSync() 兜底。
+
+
+```javascript
+// app.js
+App({
+  onLaunch(options) {
+    // 冷启动时第一次取
+    this.globalData.launchParams = options
+  },
+  onShow(options) {
+    // 关键：热启动时也能拿到最新的启动参数
+    // 冷热启动都会触发，参数就是本次进入时的完整信息
+    this.globalData.launchParams = options
+  }
+})
+
+
+// 页面里也能用 wx.getEnterOptionsSync() 直接拿
+const enterOptions = wx.getEnterOptionsSync()
+console.log(enterOptions.query)  // 这是你要的频道参数
+```
+
+
+社区有开发者实测了“URL Link跳转丢失参数”的场景，结论也是热启动要放在 onShow 里处理，或者用 wx.getEnterOptionsSync 获取。
+
+
+你自己的代码实现思路
+
+
+你现在的问题是：在 App.onLaunch 里取的参数，热启动时 onLaunch 不触发，参数丢了。
+
+
+改法：
+
+
+1. 把取参数的逻辑同时放在 App.onLaunch 和 App.onShow 里
+2. 取到之后存入 globalData 或 Storage，让整个小程序共享
+3. 如果参数只在特定页面需要，在那个页面的 onLoad 和 onShow 里都取一下（如果页面实例被缓存，onShow 会触发但 onLoad 不触发）
+
+
+核心逻辑：只要小程序从后台切到前台（包括从“最近使用”点开），App.onShow 一定会触发，而且参数就是这次进入时的参数。 你把参数存在这里，就不会丢了。

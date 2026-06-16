@@ -22,7 +22,13 @@
     </scroll-view>
 
     <scroll-view class="category-right" scroll-y enhanced bindscrolltolower="onReachBottom" bindscroll="onScroll" scroll-top="{{scrollTop}}" lower-threshold="50">
-      <view class="product-list">
+      <!-- 加载中：仅在首次进入且无商品时显示（避免空状态闪烁） -->
+      <view class="product-loading" wx:if="{{loading && products.length === 0}}">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <view class="product-list" wx:elif="{{products.length > 0}}">
         <view class="product-item" wx:for="{{products}}" wx:key="id" bindtap="goToProduct" data-id="{{item.id}}" data-slug="{{item.productSlug}}" hover-class="product-item-hover">
           <image src="{{item.image}}" mode="aspectFill" class="product-image"></image>
           <view class="product-info">
@@ -40,7 +46,8 @@
         </view>
       </view>
 
-      <view class="empty-state" wx:if="{{!loading && products.length === 0}}">
+      <!-- 空状态：仅在非 loading 且无商品时显示 -->
+      <view class="empty-state" wx:elif="{{!loading && products.length === 0}}">
         <text>该分类暂无商品</text>
       </view>
     </scroll-view>
