@@ -53,6 +53,11 @@ const GET_COLLECTION = `
           currencyCode
           sku
           stockLevel
+          isGroupPrice
+          customFields {
+            volumePrices
+            volumePricesPerChannel
+          }
           featuredAsset {
             id
             preview

@@ -67,9 +67,9 @@
 
             </view>
           </view>
-          <view class="shipping-info">
+          <!-- <view class="shipping-info">
             <text class="order-count">运费: {{item.formattedShipping}}</text>
-          </view>
+          </view> -->
           <view class="fulfillment-info">
             <text class="fulfillment-label">发货状态:</text>
             <text class="fulfillment-text">{{item.fulfillmentSummary.statusText}}</text>
@@ -80,6 +80,7 @@
             <view wx:for="{{item.fulfillmentSummary.details}}" wx:for-item="fl" wx:for-index="flIndex" wx:key="fulfillmentIndex" class="fulfillment-group">
               <view class="fulfillment-group-header">
                 <text class="fl-title">第 {{fl.fulfillmentIndex}} 次发货</text>
+                <text wx:if="{{fl.fulfillmentDate}}" class="fl-date">{{fl.fulfillmentDate}}</text>
                 <text class="fl-status" wx:if="{{!fl.trackingCode}}">{{fl.statusText}}</text>
                 <block wx:else>
 
@@ -95,6 +96,7 @@
 
                 </block>
               </view>
+              <image wx:if="{{fl.fulfillDocsPreview}}" class="fulfill-doc-image" src="{{fl.fulfillDocsPreview}}" mode="aspectFit" bindtap="previewFulfillDoc" data-preview="{{fl.fulfillDocsPreview}}"></image>
               <view wx:for="{{fl.items}}" wx:for-item="flItem" wx:for-index="flItemIndex" wx:key="flItemIndex" class="fulfillment-item">
                 <view class="fl-item-name-row">
                   <text class="fl-item-name">{{flItem.name}}</text>

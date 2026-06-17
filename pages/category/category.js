@@ -218,6 +218,7 @@ Page({
             sku: item.sku || '',
             price: formatPrice(item.priceWithTax, item.currencyCode).replace('¥', ''),
             volumePrice: (item.priceWithTax * 0.85 / 100).toFixed(2),
+            priceTag: this._getPriceTag(item),
             image: variantImage || productImage || 'https://via.placeholder.com/200x200',
             stock: item.stockLevel || '充足',
             moq: '1',
@@ -313,6 +314,7 @@ Page({
             sku: item.sku || '',
             price: formatPrice(item.priceWithTax, item.currencyCode).replace('¥', ''),
             volumePrice: (item.priceWithTax * 0.85 / 100).toFixed(2),
+            priceTag: this._getPriceTag(item),
             image: variantImage || productImage || 'https://via.placeholder.com/200x200',
             stock: item.stockLevel || '充足',
             moq: '1',
@@ -401,6 +403,39 @@ Page({
     app.updateCartBadge();
   },
 
+  /**
+   * 判断商品应展示的价格标签
+   * @returns {'VIP'|'阶梯价'|''}
+   */
+  _getPriceTag(item) {
+    if (item.isGroupPrice) return 'VIP';
+
+    const customFields = item.customFields;
+    if (!customFields) return '';
+
+    const channelToken = getApp().globalData.activeChannelToken;
+
+    if (customFields.volumePricesPerChannel) {
+      try {
+        const perChannel = JSON.parse(customFields.volumePricesPerChannel);
+        if (channelToken && perChannel[channelToken]) {
+          const config = perChannel[channelToken];
+          if (config === 'close') return '';
+          if (Array.isArray(config) && config.length > 0) return '阶梯价';
+        }
+      } catch (e) {}
+    }
+
+    if (customFields.volumePrices) {
+      try {
+        const parsed = JSON.parse(customFields.volumePrices);
+        if (Array.isArray(parsed) && parsed.length > 0) return '阶梯价';
+      } catch (e) {}
+    }
+
+    return '';
+  },
+
   onAddToCart(e) {
     const productId = e.currentTarget.dataset.id;
     const product = this.data.products.find(p => p.id == productId);
@@ -481,6 +516,7 @@ Page({
             sku: item.sku || '',
             price: formatPrice(item.priceWithTax, item.currencyCode).replace('¥', ''),
             volumePrice: (item.priceWithTax * 0.85 / 100).toFixed(2),
+            priceTag: this._getPriceTag(item),
             image: variantImage || productImage || 'https://via.placeholder.com/200x200',
             stock: item.stockLevel || '充足',
             moq: '1',

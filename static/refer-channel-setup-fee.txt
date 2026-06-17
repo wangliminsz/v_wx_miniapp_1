@@ -1,0 +1,87 @@
+为了配合你这个非常完美的单品级起批控制插件，你的前端结算页面, 要把商品纯小计、开机费明细和最终合计彻底剥离。
+
+请让你的前端团队将结算页的右侧/底部订单摘要（Order Summary）区域的 GraphQL 查询和模板逻辑修改为如下标准形态：
+
+1. GraphQL Fragment 结构
+确保你在结算页请求 activeOrder 时，把 surcharges 结构也拿出来：
+
+GraphQL
+fragment CheckoutSummary on Order {
+  subTotalWithTax       # 纯商品总额（这里是 60000，即 600元）
+  totalWithTax          # 最终总应付（这里是 90000，即 900元）
+  surcharges {          # 动态附加费列表
+    id
+    description         # "小额开机费 (商品: [HA1401B-S19-018] ...)"
+    priceWithTax        # 30000（即 300元）
+  }
+}
+2. Vue3 HTML 模板标准修正
+请将图片 2 对应的 Vue3 组件中的账目计算行，修改为标准的大宗 B2B 明细展示：
+
+HTML
+<template>
+  <div class="checkout-summary-box" v-if="order">
+    <div class="summary-item">
+      <span class="label">商品小计</span>
+      <span class="value">￥{{ (order.subTotalWithTax / 100).toFixed(2) }}</span>
+    </div>
+
+    <div 
+      v-for="fee in order.surcharges" 
+      :key="fee.id" 
+      class="summary-item surcharge-row"
+    >
+      <span class="label text-warning">⚠️ {{ fee.description }}</span>
+      <span class="value text-warning">+ ￥{{ (fee.priceWithTax / 100).toFixed(2) }}</span>
+    </div>
+
+    <div class="summary-item">
+      <span class="label">运费</span>
+      <span class="value">￥{{ (order.shippingWithTax / 100).toFixed(2) }}</span>
+    </div>
+
+    <div class="border-line"></div>
+
+    <div class="summary-item total-row">
+      <span class="label">合计</span>
+      <span class="value total-price">￥{{ (order.totalWithTax / 100).toFixed(2) }}</span>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+}
+/* 给开机费加上醒目的暖色调警告色，提示用户这是由于没买满100条触发的附加费 */
+.surcharge-row {
+  color: #ff9900;
+  background-color: #fff9f0;
+  padding: 6px 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+}
+.total-row {
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 10px;
+}
+.total-price {
+  color: #155bd4; /* 或者契合你们按钮的蓝色 */
+}
+</style>
+🎯 修正后的预期视觉对账效果
+经过这样微调后，图片 2 的界面将会变得极其合规且清晰：
+
+商品小计：￥600.00
+
+⚠️ 小额开机费 (商品: [HA1401B-S19-018]...)：+ ￥300.00
+
+运费：￥0.00
+
+合计：￥900.00
+
+这样不仅完美闭环了后端插件的所有努力，还能在视觉上用醒目的黄色明细促使客户点击返回采购车（Image 1）去凑足 100 kg 从而免掉这 300 元。这才是大宗 B2B 电商系统的标准设计！快让前端同学把这个对账明细加上吧！

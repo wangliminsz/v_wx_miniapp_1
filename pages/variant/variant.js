@@ -25,6 +25,13 @@ Page({
     // 后端 dynamic tier 规则（JSON 字符串），
     // 形如 '[{"minQuantity": 1, "rate": 1.10}, {"minQuantity": 200, "rate": 1.00}]'
     volumePrices: '',
+    // 后端 channel-specific tier 规则（JSON 字符串），
+    // 形如 '{"the-channel-token-xinyk": "close"}' 或
+    //     '{"the-channel-token-xinyk": [{"minQuantity": 1,"rate": 1.2},{"minQuantity": 10,"rate": 1.1}]}'
+    volumePricesPerChannel: '',
+    // 🔑 经 resolveEffectiveVolumePrices 解析后的有效 tier 规则
+    // 优先取 channel-specific，其次 global volumePrices，null 表示已关闭阶梯价
+    effectiveVolumePrices: '',
     // 🔑 是否为团购/集团价（后端 custom field）
     // true 时不展示阶梯价说明（按后端业务规则：团购一口价，不显示阶梯）
     isGroupPrice: false,
@@ -118,8 +125,10 @@ Page({
               currencyCode
               stockLevel
               isGroupPrice
-              customFields {
+               customFields {
                 volumePrices
+                volumePricesPerChannel
+                priceByLayer
               }
               featuredAsset {
                 id
@@ -177,6 +186,8 @@ Page({
                 isGroupPrice
                 customFields {
                   volumePrices
+                  volumePricesPerChannel
+                  priceByLayer
                 }
                 featuredAsset {
                   id
@@ -305,14 +316,19 @@ Page({
     //   ProductVariant: [{ name: 'volumePrices', type: 'string', public: true, ... }]
     // volumePrices 形如 '[{"minQuantity": 1, "rate": 1.10}, {"minQuantity": 200, "rate": 1.00}]'
     const volumePrices = (variant.customFields && variant.customFields.volumePrices) || '';
+    // volumePricesPerChannel 渠道专属 tier 规则（JSON 字符串）
+    // 形如 '{"the-channel-token-xinyk": "close"}' 或 '{"the-channel-token-xinyk": [...]}'
+    const volumePricesPerChannel = (variant.customFields && variant.customFields.volumePricesPerChannel) || '';
     // isGroupPrice 是 ProductVariant 顶层字段（后端直接加的 entity field，不是 custom field）
     const isGroupPrice = !!variant.isGroupPrice;
 
-    // 🔑 关键分支：isGroupPrice=true 时走"一口价"逻辑
-    //   - 不解析 tier 规则
-    //   - 不按 quantity 计算展示价
-    //   - 直接用后端的 basePriceWithTax
-    //   - 不渲染阶梯价提示
+    // 🔑 解析最终生效的 tier 规则：
+    //   1. isGroupPrice=true      → 一口价，走 basePriceWithTax
+    //   2. volumePricesPerChannel → 渠道专属（可能关闭阶梯价，也可能覆盖）
+    //   3. volumePrices           → 全局阶梯价
+    //   4. 以上均无               → 使用 base/standard 价
+    const effectiveVolumePrices = this.resolveEffectiveVolumePrices(volumePrices, volumePricesPerChannel);
+
     let tierList;
     let displayPriceWithTax;
     let tierDisplayList;
@@ -320,10 +336,15 @@ Page({
       tierList = [];
       displayPriceWithTax = basePriceWithTax;
       tierDisplayList = [];
+    } else if (effectiveVolumePrices === null) {
+      // volumePricesPerChannel 中当前渠道标记为 "close" → 禁用阶梯价，使用 base 价
+      tierList = [];
+      displayPriceWithTax = basePriceWithTax;
+      tierDisplayList = [];
     } else {
-      tierList = this.parseVolumePrices(volumePrices);
+      tierList = this.parseVolumePrices(effectiveVolumePrices);
       const defaultQuantity = 200;
-      displayPriceWithTax = this.calcDisplayPrice(basePriceWithTax, volumePrices, defaultQuantity);
+      displayPriceWithTax = this.calcDisplayPrice(basePriceWithTax, effectiveVolumePrices, defaultQuantity);
       // 预计算展示用 tier 列表（区间文本 + 整数化价格），WXML 直接渲染，避免浮点
       tierDisplayList = this.buildTierDisplayList(tierList, basePriceWithTax);
     }
@@ -338,6 +359,8 @@ Page({
       quantity: 200,
       basePriceWithTax: basePriceWithTax,
       volumePrices: volumePrices,
+      volumePricesPerChannel: volumePricesPerChannel,
+      effectiveVolumePrices: isGroupPrice ? '' : (effectiveVolumePrices === null ? '' : effectiveVolumePrices),
       isGroupPrice: isGroupPrice,
       tierList: tierList,
       tierDisplayList: tierDisplayList,
@@ -371,6 +394,45 @@ Page({
     } catch (e) {
       console.warn('parseVolumePrices failed:', e);
       return [];
+    }
+  },
+
+  /**
+   * 解析渠道级 volumePricesPerChannel，返回最终生效的 tier 规则
+   *
+   * 优先级：
+   *   1. volumePricesPerChannel 中当前渠道 token = "close"  → return null（禁用阶梯价）
+   *   2. volumePricesPerChannel 中当前渠道 token = [...]    → 使用渠道专属阶梯
+   *   3. 无当前渠道配置                                         → 使用全局 volumePrices
+   *
+   * @param {string} volumePricesJson 全局 volumePrices JSON 字符串
+   * @param {string} volumePricesPerChannelJson 渠道专属 volumePrices JSON 字符串
+   * @returns {string|null} 有效 tier 规则的 JSON 字符串，null 表示关闭阶梯价
+   */
+  resolveEffectiveVolumePrices(volumePricesJson, volumePricesPerChannelJson) {
+    if (!volumePricesPerChannelJson || typeof volumePricesPerChannelJson !== 'string') {
+      return volumePricesJson;
+    }
+    try {
+      const perChannel = JSON.parse(volumePricesPerChannelJson);
+      if (typeof perChannel !== 'object' || perChannel === null || Array.isArray(perChannel)) {
+        return volumePricesJson;
+      }
+      const channelToken = getApp().globalData.activeChannelToken;
+      if (!channelToken) {
+        return volumePricesJson;
+      }
+      const channelConfig = perChannel[channelToken];
+      if (channelConfig === 'close') {
+        return null;
+      }
+      if (Array.isArray(channelConfig)) {
+        return JSON.stringify(channelConfig);
+      }
+      return volumePricesJson;
+    } catch (e) {
+      console.warn('resolveEffectiveVolumePrices failed:', e);
+      return volumePricesJson;
     }
   },
 
@@ -475,12 +537,11 @@ Page({
       const newQuantity = this.data.quantity - 1;
       this.setData({
         quantity: newQuantity,
-        // 🔑 isGroupPrice=true 时（一口价/团购），价格不变
         displayPriceWithTax: this.data.isGroupPrice
           ? this.data.basePriceWithTax
           : this.calcDisplayPrice(
               this.data.basePriceWithTax,
-              this.data.volumePrices,
+              this.data.effectiveVolumePrices,
               newQuantity
             ),
       });
@@ -504,7 +565,7 @@ Page({
         ? this.data.basePriceWithTax
         : this.calcDisplayPrice(
             this.data.basePriceWithTax,
-            this.data.volumePrices,
+            this.data.effectiveVolumePrices,
             newQuantity
           ),
     });
@@ -520,7 +581,7 @@ Page({
           ? this.data.basePriceWithTax
           : this.calcDisplayPrice(
               this.data.basePriceWithTax,
-              this.data.volumePrices,
+              this.data.effectiveVolumePrices,
               quantity
             ),
       });

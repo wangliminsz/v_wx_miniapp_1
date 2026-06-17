@@ -422,17 +422,20 @@ Page({
     });
   },
 
-  onShareAppMessage: function () {
-    return {
-      title: '优涂工品',
-      path: '/pages/mine/mine'
-    };
-  },
+  // onShareAppMessage: function () {
+  //   return {
+  //     title: '优涂工品',
+  //     path: '/pages/mine/mine'
+  //   };
+  // },
 
-  onShareTimeline: function () {
-    return {
-      title: '优涂工品',
-      path: '/pages/mine/mine'
-    };
-  }
+  // onShareTimeline: function () {
+  //   return {
+  //     title: '优涂工品',
+  //     path: '/pages/mine/mine'
+  //   };
+  // }
+
+
+
 });

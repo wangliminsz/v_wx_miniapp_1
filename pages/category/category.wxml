@@ -40,6 +40,8 @@
               <view class="product-prices">
                 <text wx:if="{{item.isMock}}" class="product-price-mock">登录后查看</text>
                 <text wx:else class="product-price">¥ {{item.price}} 元/kg</text>
+                <view style="height: 12rpx;"></view>
+                <text wx:if="{{!item.isMock && item.priceTag}}" class="product-price-tag {{item.priceTag === 'VIP' ? 'tag-vip' : 'tag-tier'}}">{{item.priceTag}}</text>
               </view>
             </view>
           </view>

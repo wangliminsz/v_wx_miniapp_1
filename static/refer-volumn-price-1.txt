@@ -1,0 +1,80 @@
+Done. Here's what changed:
+| File | Change |
+|------|--------|
+| providers/shop/products/products.js:56-60 | Added isGroupPrice + customFields { volumePrices, volumePricesPerChannel } to GET_COLLECTION query |
+| pages/category/category.js:410-437 | New _getPriceTag(item) method — detects VIP (group price) or 阶梯价 (global or channel-specific volume pricing) |
+| pages/category/category.js:221,317,519 | Added priceTag: this._getPriceTag(item) to all 3 real product mapping blocks |
+| pages/category/category.wxml:43 | Renders tag inline after price |
+| pages/category/category.wxss:247-262 | Subtle styling — .tag-vip (gold/amber, warm bg)  .tag-tier (green, light green bg) |
+Resolution logic in _getPriceTag:
+isGroupPrice?        → "VIP"
+volumePricesPerChannel[channelToken] = "close"? → "" (no tag)
+volumePricesPerChannel[channelToken] is array?  → "阶梯价"
+volumePrices has entries?                         → "阶梯价"
+otherwise → "" (no tag)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Resolution order (crystal clear now):
+priceByLayer (has value?) → use it directly, done
+  ↓ no
+volumePricesPerChannel = "close"? → use base price, done
+  ↓ has array
+use channel-specific volumePricesPerChannel tiers
+  ↓ empty/missing
+use global volumePrices tiers
+  ↓ none
+use base/standard price
+
+
+
+
+
+Issues / Concerns ⚠️
+
+1. rate is a misleading name — rate: 1.10 suggests a multiplier, but the field is called volumePrices. If it's a multiplier, rename to volumePriceRates. If it's an absolute price, rename the field. Mixing semantics will confuse future maintainers.
+
+this data structure from backend, so we no need to change it
+
+
+2. Tier selection algorithm unspecified — Given tiers [{minQuantity:1, rate:1.10}, {minQuantity:200, rate:1.00}] and a cart of 150 units, which rate applies? I assume "the tier with the highest minQuantity ≤ cart quantity", but this should be explicitly documented (and is it applied per-unit or tiered like progressive tax brackets?).
+
+
+1-199, use the rate 1.1
+above 200(include 200), use rate 1
+
+
+3. priceByLayer × volumePrices interaction undefined — When both are set, which wins? E.g., a group member buys 300 units — do they get priceByLayer's group price, or the volume price based on quantity? The spec says priceByLayer is used "directly" but doesn't clarify whether volume pricing is then stacked on top or skipped entirely.
+
+
+priceByLayer first, if it has priceByLayer price, then use it, (currently done, could refer the code in pages\variant page)
+
+
+4. No upper bound on tiers — [{minQuantity: 1}, {minQuantity: 50}] leaves ambiguity for quantities between 50–199 before the next tier kicks in. Consider using maxQuantity or explicitly documenting that the algorithm picks the highest minQuantity ≤ N.
+
+no maxQuantity need, 
+[{minQuantity: 1}, {minQuantity: 50}]: 
+means 1-49 and above 50(include 50)
+
+
+5. JSON-in-string fields are fragile — No DB-level validation, no indexing, harder to migrate. Consider a VolumePrice entity with proper relations if this grows.
+
+yes later
+
+6. rate semantics — Is it price * rate or basePrice + (basePrice * (rate - 1))? Clarify whether the base is the standard price or priceByLayer's value.
+Verdict: The schema is workable for an MVP but has several ambiguity gaps that will cause bugs. I'd recommend fixing items 1–4 before implementing. Want me to help draft the revised spec or proceed with coding the resolution logic?
+
+rate*baseprice is ok
+the base is the standard price
+priceByLayer's value don't apply to this rule, if it has value, it's in the top priority, will use it directly

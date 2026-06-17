@@ -259,6 +259,11 @@
   color: #165DFF;
 }
 
+.fl-date {
+  font-size: 20rpx;
+  color: #86909C;
+}
+
 .fl-status {
   font-size: 22rpx;
   color: #00B42A;
@@ -280,6 +285,15 @@
 .fl-tracking-code:active {
   background-color: #165DFF;
   color: #FFFFFF;
+}
+
+.fulfill-doc-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 8rpx;
+  margin: 8rpx 0;
+  background-color: #F2F3F5;
+  border: 1rpx solid #E5E6EB;
 }
 
 .fulfillment-item {

@@ -239,6 +239,27 @@
   color: #00B42A;
 }
 
+.product-price-tag {
+  display: inline-block;
+  font-size: 20rpx;
+  margin-left: 8rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+  vertical-align: middle;
+}
+
+.tag-vip {
+  color: #B8860B;
+  background: #FFF8E7;
+  border: 1rpx solid #F0D78C;
+}
+
+.tag-tier {
+  color: #2B7A4B;
+  background: #EDF7F0;
+  border: 1rpx solid #B8DCC6;
+}
+
 .product-stock {
   font-size: 22rpx;
   color: #86909C;

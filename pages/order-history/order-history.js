@@ -9,10 +9,10 @@ Page({
     currentFilter: 'InProgress',
     sortOrder: 'desc',
     filters: [
-      { key: 'InProgress', label: '订单' },
-      { key: 'Shipping', label: '物流' },
+      { key: 'InProgress', label: '待发' },
+      { key: 'Shipping', label: '已发' },
       { key: 'Cancelled', label: '取消' },
-      { key: 'all', label: 'All' },
+      { key: 'all', label: '全部' },
     ],
     isInitialLoad: true,
     searchKeyword: '',
@@ -94,9 +94,16 @@ Page({
               shippingWithTax
               fulfillments {
                 id
+                createdAt
                 state
                 method
                 trackingCode
+                customFields {
+                  fulfillDocs {
+                    id
+                    preview
+                  }
+                }
                 lines {
                   quantity
                   orderLine {
@@ -141,9 +148,16 @@ Page({
               shippingWithTax
               fulfillments {
                 id
+                createdAt
                 state
                 method
                 trackingCode
+                customFields {
+                  fulfillDocs {
+                    id
+                    preview
+                  }
+                }
                 lines {
                   quantity
                   orderLine {
@@ -306,12 +320,16 @@ Page({
           quantity: line.quantity,
         };
       });
+      const fulfillDocsPreview = (f.customFields && f.customFields.fulfillDocs && f.customFields.fulfillDocs.preview) || '';
+      const fulfillmentDate = f.createdAt ? this.formatDate(f.createdAt) : '';
       details.push({
         fulfillmentIndex: validFIdx,
         statusText,
         statusTextBeforeTracking,
         method: f.method || '',
         trackingCode: f.trackingCode || '',
+        fulfillDocsPreview,
+        fulfillmentDate,
         items,
       });
     });
@@ -397,6 +415,16 @@ Page({
         });
       },
     });
+  },
+
+  previewFulfillDoc(e) {
+    const preview = e.currentTarget.dataset.preview;
+    if (preview) {
+      wx.previewImage({
+        urls: [preview],
+        current: preview,
+      });
+    }
   },
 
   onCopyTrackingCode(e) {

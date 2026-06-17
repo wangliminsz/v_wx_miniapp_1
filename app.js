@@ -743,7 +743,7 @@ App({
         }
       `;
       const data = await graphqlClient.query(query);
-      console.log('syncServerCartCount - data:', data);
+      // console.log('syncServerCartCount - data:', data);
       if (data?.activeOrder?.lines) {
         this.globalData.cartTotalCount = data.activeOrder.lines.length; // Count number of distinct items
         this.updateCartBadge();

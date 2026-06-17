@@ -153,12 +153,22 @@ Page({
   // 分享给好友
   onShareAppMessage() {
     // 优先取 banners 第一张作为分享封面，提升点击率
-    // imageUrl: shareImage,
     const firstBanner = (this.data.banners && this.data.banners[0]) || {};
     const shareImage = firstBanner.image || '';
+
+    // 🔑 把当前渠道 code 拼到分享 path 上
+    // 接收方打开分享卡片 → onLaunch(options.query.channel) 触发 → 进入 channel 解析流程
+    // 配合 app.js 的 storage 兜底：接收方后续从"最近使用"进入也能保持 channel
+    const app = getApp();
+    const currentChannel = (app && app.globalData && app.globalData.currentChannel) || '';
+    const sharePath = currentChannel
+      ? `/pages/home/home?channel=${encodeURIComponent(currentChannel)}`
+      : '/pages/home/home';
+
     return {
-      title: '绮一舟粉末采购平台',
-      path: '/pages/home/home',
+      title: '优涂工品 - 绮一舟粉末采购平台',
+      path: sharePath,
+      // imageUrl: shareImage,  // 取消注释，使用 banner 作分享封面
     };
   },
 
@@ -166,10 +176,18 @@ Page({
   onShareTimeline() {
     const firstBanner = (this.data.banners && this.data.banners[0]) || {};
     const shareImage = firstBanner.image || '';
+
+    // 🔑 朋友圈分享也带 channel，接收方打开后会被 onLaunch 捕获
+    const app = getApp();
+    const currentChannel = (app && app.globalData && app.globalData.currentChannel) || '';
+    const sharePath = currentChannel
+      ? `/pages/home/home?channel=${encodeURIComponent(currentChannel)}`
+      : '/pages/home/home';
+
     return {
-      title: '优涂工品 - 工业粉末采购平台',
-      path: '/pages/home/home',
-      imageUrl: shareImage,
+      title: '优涂工品 - 绮一舟粉末采购平台',
+      path: sharePath,
+      // imageUrl: shareImage,
     };
   },
 });
