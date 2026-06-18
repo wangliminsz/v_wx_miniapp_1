@@ -26,6 +26,13 @@
           <view class="item-info">
             <text class="item-name">{{item.productVariant.name}}</text>
             <text class="item-sku" wx:if="{{item.productVariant.sku}}">{{item.productVariant.sku}}</text>
+            <!-- 🔑 附加费（开机费）— 与 cart 页面同款，inline 在该商品行下方
+                 位置：item-info 列内，SKU 之下
+                 风格：橙色小字 + 紧凑"开机费 +¥X"格式 -->
+            <view class="item-setup-fee" wx:if="{{item.setupFee && item.setupFee !== ''}}">
+              <text class="item-setup-fee-label">开机费</text>
+              <text class="item-setup-fee-amount">+ {{item.setupFee}}</text>
+            </view>
           </view>
           <view class="item-right">
             <text class="item-qty">{{item.quantity}} kg</text>
@@ -34,21 +41,13 @@
         </view>
       </view>
 
+      <!-- 价格汇总
+           🔑 附加费明细（开机费/起批费等）已经移到每个商品行内显示（与 cart 页面同款）
+           这里不再重复显示 surcharge-row，避免在两处都看到开机费 -->
       <view class="order-totals">
         <view class="total-row">
           <text class="total-label">商品小计</text>
           <text class="total-value">{{orderSummary ? orderSummary.subTotal : ''}}</text>
-        </view>
-        <!-- 🔑 附加费明细（开机费/起批费等）
-             每条单独显示，橙色警告样式，提示用户"未买满起批量触发的附加费" -->
-        <view
-          class="total-row surcharge-row"
-          wx:for="{{orderSummary.surcharges}}"
-          wx:key="id"
-          wx:if="{{orderSummary && orderSummary.hasSurcharges}}"
-        >
-          <text class="total-label text-warning">⚠️ {{item.description}}</text>
-          <text class="total-value text-warning">+ {{item.formattedPrice}}</text>
         </view>
         <view class="total-row">
           <text class="total-label">运费</text>

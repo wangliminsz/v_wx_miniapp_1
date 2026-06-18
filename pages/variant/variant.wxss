@@ -184,6 +184,29 @@
   /* font-weight: 700; */
 }
 
+/* 🔑 渠道级开机费提示（与 cart/checkout 的 .item-setup-fee 同色系）
+   位置：紧贴价格下方
+   风格：橙色小字 + ⚠️ icon + 紧凑一行
+   形如："⚠️ 如采购数量低于 100，将收取开机费 ¥ 300.00"
+   仅在两 custom fields 都 > 0 时显示 */
+.setup-fee-hint {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.3;
+  color: #FF7D00;
+}
+.setup-fee-hint-icon {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.setup-fee-hint-text {
+  color: #FF7D00;
+  font-weight: 500;
+}
+
 .tier-hint {
   display: flex;
   flex-direction: column;

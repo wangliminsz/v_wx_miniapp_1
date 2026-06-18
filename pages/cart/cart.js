@@ -29,15 +29,43 @@ Page({
     });
   },
 
-  async onShow() {
+  onShow() {
+    // 🔑 关键：先**同步**设置 isLoading=true（和 isLogin 同步）
+    // 再异步等待 + loadCart
+    // 原因：WeChat mini program 的 onShow 流程是：
+    //   1) WXML 先用当前 data 渲染一次（这是用户看到的"第一帧"）
+    //   2) 然后执行 onShow
+    // 如果 onShow 里只有 await + 后续 setData，那在 await 期间 WXML 可能用旧 data
+    //   渲染出"采购车是空的"（如果上一次 cartItems 是空，或者被 _fetchAndDisplayCart 在 !data?.activeOrder 时清空了）
+    //   导致用户看到 "splash of empty state" 的闪烁
+    // 解决：把 isLoading=true 和 isLogin 同步写出去，WXML 的第一帧就是 loading overlay
     console.log(`[CART] 📱 onShow START, isLogin=${app.globalData.isLogin}, _fetchVersion=${this._fetchVersion}`);
+    this.setData({
+      isLogin: app.globalData.isLogin,
+      isLoading: true,
+    });
+    this._doOnShow();
+  },
+
+  async _doOnShow() {
     await app.initPromise;
     await app.loginPromise;
     this.loadCart();
-    this.setData({
-      isLogin: app.globalData.isLogin
-    });
     console.log(`[CART] 📱 onShow END, dispatched loadCart()`);
+  },
+
+  // 🔑 关键修复：用户切换到其他 tab 时立刻把 isLoading 置为 true
+  // 原因：WeChat mini program 在 page 被切回前台时的执行顺序是：
+  //   1) WXML 用**当前 data**渲染一帧（用户能看到这一帧）
+  //   2) 然后才调用 onShow
+  // 如果上一次离开时 isLoading=false、cartItems=[]（空购物车状态），
+  //   那切回来时 WXML 第一帧会渲染"采购车是空的"splash，然后 onShow 才把 isLoading 置 true
+  //   → 用户看到一次空状态闪烁
+  // 解决：onHide 时立刻把 isLoading=true 写进 data，data 已经被刷新为 loading
+  //   → 切回时 WXML 第一帧直接渲染 loading overlay，splash 消失
+  onHide() {
+    console.log(`[CART] 📱 onHide — set isLoading=true to prevent empty splash on return`);
+    this.setData({ isLoading: true });
   },
 
   async initCart() {
@@ -66,14 +94,26 @@ Page({
       } else {
         const cartItems = app.getCartItems();
         this.updateCartDisplay(cartItems);
+        // 未登录分支没有 retry 逻辑，可以在这里关掉 loading
+        this.setData({ isLoading: false });
       }
-    } finally {
-      // wx.hideLoading();
+    } catch (error) {
+      console.error('[CART] ❌ loadCart 失败:', error);
+      // 出错时也关掉 loading + 清空 cart（让用户看到明确的空态）
       this.setData({
-        isLoading: false
+        serverOrder: null,
+        cartItems: [],
+        totalCount: 0,
+        totalPrice: '0.00',
+        isLoading: false,
       });
-      console.log(`[CART] 📋 loadCart END`);
     }
+    // 🔑 关键修复：移除 finally 里的 isLoading=false
+    // 原因：loadServerCart 内部会在成功路径（写入 cartItems 时）显式 set isLoading=false，
+    //   在 retry/empty 路径会保持 isLoading=true。
+    // 如果外层 finally 再 set 一次 false，就会把 retry 期间的 loading 提前关掉，
+    //   → 用户看到 "splash of empty state"
+    console.log(`[CART] 📋 loadCart END`);
   },
 
   async loadServerCart() {
@@ -97,19 +137,20 @@ Page({
       await this._fetchAndDisplayCart(0, myVersion);
     } catch (error) {
       console.error('[CART] ❌ 加载服务器购物车失败:', error);
-      // 出错时也清空（不要用本地 items 覆盖，否则会丢 setupFee）
+      // 出错时关掉 loading + 清空 cart（让用户看到明确的空态）
       this.setData({
         serverOrder: null,
         cartItems: [],
         totalCount: 0,
         totalPrice: '0.00',
+        isLoading: false,
       });
-    } finally {
-      this.setData({
-        isLoading: false
-      });
-      console.log(`[CART] 🏁 loadServerCart END (v${myVersion})`);
     }
+    // 🔑 关键修复：移除 finally 里的 isLoading=false
+    // 原因：_fetchAndDisplayCart 内部会在成功路径显式 set isLoading=false，
+    //   在 retry/empty 路径会保持 isLoading=true（直到真正写入 cartItems 或重试耗尽）。
+    // 如果这里 finally 再 set 一次 false，就会把 retry 期间的 loading 提前关掉。
+    console.log(`[CART] 🏁 loadServerCart END (v${myVersion})`);
   },
 
   // 🔑 单独抽出的"拉取 + 展示"逻辑
@@ -210,12 +251,24 @@ Page({
     }
 
     if (!data?.activeOrder) {
-      console.log(`${TAG} 📭 activeOrder 为空（用户没加任何商品），清空 cartItems`);
+      // 🔑 关键修复：不要立即判定"购物车为空"
+      // 场景：用户刚在 variant 页 addItemToOrder，cart 立即 fetch
+      //   → 后端 activeOrder 可能还没完全建好 → 返回 null
+      //   → 如果此时 setData({cartItems: []}) + loadServerCart.finally(isLoading=false)
+      //   → 用户看到 "采购车是空的" splash 一帧
+      // 解决：把它当 "数据还没准备好" 处理，保持 isLoading=true 继续 retry
+      if (retryCount < MAX_RETRIES) {
+        console.log(`${TAG} 📭 activeOrder 为空，retry ${retryCount + 1}/${MAX_RETRIES}（保持 isLoading=true，避免 splash empty）`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return this._fetchAndDisplayCart(retryCount + 1, version);
+      }
+      console.log(`${TAG} 📭 activeOrder 仍为空，重试 ${MAX_RETRIES} 次后放弃，清空 cartItems`);
       this.setData({
         serverOrder: null,
         cartItems: [],
         totalCount: 0,
         totalPrice: '0.00',
+        isLoading: false,
       });
       return;
     }
@@ -355,6 +408,12 @@ Page({
     });
 
     this.updateCartDisplay(cartItems);
+    // 🔑 关键修复：成功路径必须显式 set isLoading=false
+    // 之前依赖 loadServerCart.finally / loadCart.finally 设置，
+    //   但当 _fetchAndDisplayCart 在 !data?.activeOrder 分支里被替换为 retry 时，
+    //   外层 finally 会先把 isLoading=false 一次，cartItems=[]，造成 splash empty
+    // 现在只有真正写入 cartItems 时才关掉 loading，retry/empty 期间保持 isLoading=true
+    this.setData({ isLoading: false });
     console.log(`========== ${TAG} END (写入完成) ==========`);
   },
 

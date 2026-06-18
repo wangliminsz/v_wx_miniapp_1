@@ -25,13 +25,7 @@
   <view class="search-bar" wx:if="{{currentFilter === 'all'}}">
     <view class="search-box">
       <view class="search-input-wrapper">
-        <input
-          class="search-input"
-          type="text"
-          placeholder="搜索订单号/SKU/商品名"
-          value="{{searchKeyword}}"
-          bindinput="onSearchInput"
-        />
+        <input class="search-input" type="text" placeholder="搜索订单号/SKU/商品名" value="{{searchKeyword}}" bindinput="onSearchInput" />
         <view class="clear-icon-wrapper" wx:if="{{searchKeyword}}" bindtap="onSearchClear">
           <text class="clear-icon">×</text>
         </view>
@@ -60,12 +54,24 @@
         <view class="order-content">
           <view class="order-line" wx:for="{{item.formattedLines}}" wx:for-item="line" wx:for-index="lineIndex" wx:key="lineIndex">
             <text class="order-items">{{line.productVariant.name}}</text>
-            <view class="line-info">
-              <text class="order-count">{{line.formattedUnitPrice}}</text>
-              <text class="order-count">*</text>
-              <text class="order-count">{{line.quantity}} kg</text>
+
+            <view class="flex flex-row justify-between">
+
+              <view class="line-info">
+                <text class="order-count">{{line.formattedUnitPrice}}</text>
+                <text class="order-count">*</text>
+                <text class="order-count">{{line.quantity}} kg</text>
+              </view>
+
+              <!-- 🔑 附加费（开机费）— 与 cart/checkout 页面同款-->
+              <view class="item-setup-fee" wx:if="{{line.setupFee && line.setupFee !== ''}}">
+                <text class="item-setup-fee-label">开机费</text>
+                <text class="item-setup-fee-amount">+ {{line.setupFee}}</text>
+              </view>
 
             </view>
+
+
           </view>
           <!-- <view class="shipping-info">
             <text class="order-count">运费: {{item.formattedShipping}}</text>

@@ -46,6 +46,15 @@ Page({
     //        {lower: 200, upper: 500, rangeText: "200-500", price: 28},
     //        {lower: 500, upper: null, rangeText: "500-", price: 25.2}]
     tierDisplayList: [],
+    // 🔑 渠道级开机费配置（custom fields，cents → yuan）
+    // 来自 query GetChannelSetupFees
+    // 0 / null / undefined = 该渠道未启用开机费，不显示提示
+    minOrderAmountForSetupFee: 0,
+    setupFeeAmount: 0,
+    setupFeeAmountYuan: '0.00',  // 格式化后的元字符串，方便 WXML 直接展示
+    // 🔑 渠道级开机费提示文本（仅在两字段都 > 0 时计算）
+    // 形如: "如采购数量低于 100，将收取开机费 ¥ 300.00"
+    setupFeeHintText: '',
   },
 
   onLoad(options) {
@@ -76,11 +85,64 @@ Page({
     this.setData({ isLogin: app.globalData.isLogin });
     this.updateCartCount();
     this.fetchVariant();
+    this.fetchChannelSetupFees();
   },
 
   updateCartCount() {
     const count = app.globalData.cartTotalCount || 0;
     this.setData({ cartCount: count });
+  },
+
+  // 🔑 拉取当前 channel 的开机费配置（custom fields）
+  // 字段为 0 / null / undefined 时视为未启用，不显示提示
+  // 数据来源：query GetChannelSetupFees
+  //  - minOrderAmountForSetupFee: 数量阈值（kg）
+  //  - setupFeeAmount: 开机费金额（cents，需 ÷ 100 转 yuan）
+  async fetchChannelSetupFees() {
+    const query = `
+      query GetChannelSetupFees {
+        activeChannel {
+          id
+          code
+          customFields {
+            minOrderAmountForSetupFee
+            setupFeeAmount
+          }
+        }
+      }
+    `;
+    try {
+      const data = await graphqlClient.query(query);
+      const channel = data?.activeChannel;
+      const minAmount = (channel && channel.customFields && channel.customFields.minOrderAmountForSetupFee) || 0;
+      const feeAmountCents = (channel && channel.customFields && channel.customFields.setupFeeAmount) || 0;
+      console.log(`[VARIANT] channel=${channel && channel.code} minOrderAmountForSetupFee=${minAmount} setupFeeAmount=${feeAmountCents}cents`);
+
+      // 仅当两个字段都 > 0 时计算提示文本
+      let hintText = '';
+      if (minAmount > 0 && feeAmountCents > 0) {
+        const feeYuan = (feeAmountCents / 100).toFixed(2);
+        // 形如："如采购数量低于 100，将收取开机费 ¥ 300.00"
+        hintText = `如采购数量低于 ${minAmount}，将收取开机费 ¥ ${feeYuan}`;
+        this.setData({
+          minOrderAmountForSetupFee: minAmount,
+          setupFeeAmount: feeAmountCents,
+          setupFeeAmountYuan: feeYuan,
+          setupFeeHintText: hintText,
+        });
+      } else {
+        // 任一字段为 0 → 不启用，清空提示
+        this.setData({
+          minOrderAmountForSetupFee: 0,
+          setupFeeAmount: 0,
+          setupFeeAmountYuan: '0.00',
+          setupFeeHintText: '',
+        });
+      }
+    } catch (err) {
+      // GraphQL 失败（很可能是 activeChannel 上没加 custom fields）→ 静默失败，不显示提示
+      console.warn('[VARIANT] fetchChannelSetupFees failed (probably customFields not defined on Channel):', err);
+    }
   },
 
   async fetchVariant() {

@@ -111,11 +111,32 @@ Page({
         const order = data.activeOrder;
         const currency = order.currencyCode || 'CNY';
 
-        const linesWithImages = order.lines.map(line => ({
-          ...line,
-          image: line.featuredAsset?.preview || line.productVariant.featuredAsset?.preview || '',
-          formattedPrice: this.formatPrice(Math.round(line.linePriceWithTax), currency)
-        }));
+        // 🔑 与 cart 页面保持一致：用 surcharge.description 中的 [SKU] 标记反查该行是否触发了开机费
+        // 例："小额开机费 (商品: [HA1401H-S19-026] 白色砂纹聚酯型粉末涂料)" → SKU = "HA1401H-S19-026"
+        const surchargeBySku = new Map();
+        (order.surcharges || []).forEach(s => {
+          if (s.description) {
+            const match = s.description.match(/\[([^\]]+)\]/);
+            if (match && match[1]) {
+              // 同 SKU 多个 surcharge 时保留第一个（与 cart 的 Map 行为一致）
+              if (!surchargeBySku.has(match[1])) {
+                surchargeBySku.set(match[1], s);
+              }
+            }
+          }
+        });
+
+        const linesWithImages = order.lines.map(line => {
+          const setupFeeSurcharge = surchargeBySku.get(line.productVariant.sku);
+          return {
+            ...line,
+            image: line.featuredAsset?.preview || line.productVariant.featuredAsset?.preview || '',
+            formattedPrice: this.formatPrice(Math.round(line.linePriceWithTax), currency),
+            // 🔑 该行触发的附加费（开机费）— 与 cart 页面同款，display in line 下方
+            setupFee: setupFeeSurcharge ? this.formatPrice(Math.round(setupFeeSurcharge.priceWithTax), currency) : null,
+            setupFeePrice: setupFeeSurcharge ? Math.round(setupFeeSurcharge.priceWithTax) : 0,
+          };
+        });
 
         this.setData({
           activeOrder: {

@@ -137,6 +137,26 @@ page {
   color: #1D2129;
 }
 
+/* 🔑 商品行内"开机费"小行（与 cart 页面同款）
+   位置：item-info 列内，SKU 之下
+   风格：橙色小字 + 紧凑"开机费 +¥X"格式
+   提示用户"该商品未买满起批量触发的附加费"，促使他回 cart 凑单 */
+.item-setup-fee {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.3;
+}
+.item-setup-fee-label {
+  color: #86909C;            /* 灰色标签 */
+}
+.item-setup-fee-amount {
+  color: #FF7D00;            /* 橙色金额（辅助色） */
+  font-weight: 600;
+}
+
 /* 价格汇总 */
 .order-totals {
   border-top: 1rpx solid #E5E6EB;

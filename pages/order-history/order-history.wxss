@@ -194,6 +194,25 @@
   gap: 10rpx;
 }
 
+/* 🔑 商品行内"开机费"小行（与 cart/checkout 页面同款）
+   位置：line-info（"单价 * 数量"）下方
+   风格：橙色小字 + 紧凑"开机费 +¥X"格式 */
+.item-setup-fee {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.3;
+}
+.item-setup-fee-label {
+  color: #86909C;            /* 灰色标签 */
+}
+.item-setup-fee-amount {
+  color: #FF7D00;            /* 橙色金额（辅助色） */
+  font-weight: 600;
+}
+
 .order-count {
   font-size: 24rpx;
   color: #86909C;
