@@ -730,10 +730,14 @@ Page({
         }
       `;
 
+      console.log(`[VARIANT] 📡 addItemToOrder mutation: variantId=${this.data.variant.id}, qty=${this.data.quantity}, sku=${this.data.variant.sku}`);
+      const mutationStart = Date.now();
       const result = await graphqlClient.mutate(mutation, {
         productVariantId: this.data.variant.id,
         quantity: this.data.quantity,
       }, token);
+      const mutationDuration = Date.now() - mutationStart;
+      console.log(`[VARIANT] 📡 addItemToOrder 响应耗时 ${mutationDuration}ms:`, result);
 
       const addResult = result?.addItemToOrder;
 
@@ -746,9 +750,10 @@ Page({
         });
         await app.syncServerCartCount();
         this.updateCartCount();
+        console.log(`[VARIANT] ✅ addItemToOrder 成功，用户即将跳转 cart 页`);
       }
     } catch (error) {
-      console.error('加入采购车失败:', error);
+      console.error('[VARIANT] ❌ 加入采购车失败:', error);
       this.setData({ addToCartError: error.message || '加入采购车失败，请重试' });
     }
   },

@@ -40,6 +40,17 @@
           <text class="total-label">商品小计</text>
           <text class="total-value">{{orderSummary ? orderSummary.subTotal : ''}}</text>
         </view>
+        <!-- 🔑 附加费明细（开机费/起批费等）
+             每条单独显示，橙色警告样式，提示用户"未买满起批量触发的附加费" -->
+        <view
+          class="total-row surcharge-row"
+          wx:for="{{orderSummary.surcharges}}"
+          wx:key="id"
+          wx:if="{{orderSummary && orderSummary.hasSurcharges}}"
+        >
+          <text class="total-label text-warning">⚠️ {{item.description}}</text>
+          <text class="total-value text-warning">+ {{item.formattedPrice}}</text>
+        </view>
         <view class="total-row">
           <text class="total-label">运费</text>
           <text class="total-value">{{orderSummary ? orderSummary.shipping : '待定'}}</text>

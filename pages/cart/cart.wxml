@@ -45,23 +45,37 @@
 
           <!-- 数量控制 -->
           <view class="quantity-control">
-            <view class="quantity-btn minus" bindtap="onMinus" data-index="{{index}}">
+            <view class="quantity-btn minus" bindtap="onMinus" data-line-id="{{item.id}}">
               <text>-</text>
             </view>
             <view class="quantity-input-wrap">
-              <input type="number" class="quantity-input" value="{{item.quantity}}" bindchange="onQuantityChange" data-index="{{index}}" />
+              <input type="number" class="quantity-input" value="{{item.quantity}}" bindchange="onQuantityChange" data-line-id="{{item.id}}" />
               <text class="quantity-unit">kg</text>
             </view>
-            <view class="quantity-btn plus" bindtap="onPlus" data-index="{{index}}">
+            <view class="quantity-btn plus" bindtap="onPlus" data-line-id="{{item.id}}">
               <text>+</text>
             </view>
           </view>
-          <!-- 小计 -->
-          <text class="item-line-total">¥ {{item.lineTotal}}</text>
+
+          <view style="height: 30rpx;"></view>
+          <view class="flex flex-row justify-between">
+            <view>
+              <!-- 🔑 附加费（开机费）— 仅在该行触发了开机费时显示，紧凑"开机费 +¥X"格式
+               位置：line total 上方，提示用户该商品未达起批量触发了附加费 -->
+              <view class="item-setup-fee" wx:if="{{item.setupFee}}">
+                <text class="item-setup-fee-label">开机费</text>
+                <text class="item-setup-fee-amount">+ {{item.setupFee}}</text>
+              </view>
+            </view>
+            <view>
+              <!-- 小计 -->
+              <text class="item-line-total">¥ {{item.lineTotal}}</text>
+            </view>
+          </view>
         </view>
 
         <!-- 删除按钮 -->
-        <view class="item-delete" bindtap="onDelete" data-index="{{index}}">
+        <view class="item-delete" bindtap="onDelete" data-line-id="{{item.id}}">
           <text class="delete-icon">×</text>
         </view>
       </view>
@@ -70,7 +84,9 @@
 
     <!-- 底部工具栏 -->
     <view class="bottom-bar" wx:if="{{cartItems.length > 0}}">
-      <!-- 合计 -->
+      <!-- 合计
+           🔑 开机费说明已经移到每个商品行内显示（line total 上方）
+           这里只显示最终合计金额，金额 = 商品小计 + 开机费 + 运费（来自后端 totalWithTax） -->
       <view class="total-section">
         <view class="total-row">
           <text class="total-label">合计:</text>

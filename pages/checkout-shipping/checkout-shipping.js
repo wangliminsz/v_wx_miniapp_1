@@ -60,6 +60,12 @@ Page({
           shippingWithTax
           totalWithTax
           currencyCode
+          # 🔑 附加费（开机费/起批费等动态加价）
+          surcharges {
+            id
+            description
+            priceWithTax
+          }
           shippingAddress {
             fullName
             phoneNumber
@@ -132,11 +138,24 @@ Page({
     const order = this.data.activeOrder;
     const subTotal = Math.round(order.subTotalWithTax || 0);
     const shipping = Math.round(order.shippingWithTax || 0);
-    const total = subTotal + shipping;
+    // 🔑 附加费列表（开机费等）：每条单独算展示价
+    const surcharges = (order.surcharges || []).map(s => ({
+      id: s.id,
+      description: s.description,
+      priceWithTax: Math.round(s.priceWithTax || 0),
+      formattedPrice: this.formatPrice(Math.round(s.priceWithTax || 0), currency),
+    }));
+    const surchargesTotal = surcharges.reduce((sum, s) => sum + s.priceWithTax, 0);
+    // 🔑 合计直接用后端 totalWithTax（包含 subTotal + surcharges + shipping）
+    // 不在前端自己加，避免跟后端起批费规则脱节
+    const total = Math.round(order.totalWithTax || 0);
 
     const summary = {
       subTotal: this.formatPrice(subTotal, currency),
       shipping: this.formatPrice(shipping, currency),
+      surcharges: surcharges,
+      surchargesTotal: this.formatPrice(surchargesTotal, currency),
+      hasSurcharges: surcharges.length > 0,
       total: this.formatPrice(total, currency),
       currency: currency
     };

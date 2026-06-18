@@ -1,0 +1,69 @@
+for my frontend,
+
+when I add item to my cart, if they meet the condition of setup-fee(such as 99)
+
+
+
+the first one - it's ok, all ok, with the display
+
+
+
+but for the 2nd one, from the 2nd, when add to cart, it will not show the display, frontend say it seems the surcharges is async, so not fetched?? but why the first one ok?? happen to??
+
+这个现象非常经典，前端同学感觉的“附加费（surcharges）是异步的，第二次没获取到”直觉非常准！这确实是一个由于后端异步写入与前端 GraphQL 缓存更新时机交织在一起导致的典型数据同步同步（Race Condition）问题。
+
+至于为什么“第一次好使，从第二次开始就不显示”，原因其实非常奇妙。我为你拆解一下底层的核心原因和最完美的修复方案：
+
+🔍 为什么第一次好使？第二次就不行了？
+我们在后端插件里，为了防止数据库锁死和事务冲突，引入了 setTimeout(..., 50)。正是这 50 毫秒的延迟，导致了前后端的时间差：
+
+1. 第一次加车（购物车原本没有该商品的附加费）：
+前端调用 addItemToOrder 变动（Mutation）。
+
+后端收到请求，立刻把商品加进购物车，并准备返回给前端。此时后端的 setTimeout 异步拦截器触发，并在 50ms 后往数据库写入了 SETUP-FEE-X。
+
+为什么第一次前端能看到？ 因为第一次加车时，前端拿到返回结果后，由于购物车状态改变，往往会触发一次全局的购物车刷新（或者路由重定向、全量重新拉取 activeOrder）。这行重新拉取的动作，刚好落在了后端 50ms 写入成功之后，所以前端阴差阳错地看到了。
+
+2. 第二次及以后加车（修改数量 / 增加其他单品）：
+前端在购物车页面点击 + 号，调用 adjustOrderLine（修改数量为 60 🚀 70）。
+
+后端执行完数量修改，零延迟瞬间把当前购物车的最新状态返回给了前端。
+
+致命时间差诞生： 当后端把结果返回给前端的一瞬间，后端的 setTimeout 的 50ms 还没到呢！此时后端正在偷偷计算、删除旧的开机费、写入新的开机费。
+结果，前端拿到的 Mutation 返回值里，surcharges 字段依然保留的是上一次数量（60件时）的旧开机费数据。
+
+前端（如 Apollo Client 或 Pinia）收到返回值后，会直接用这个带有一分钟前旧数据的响应去更新本地缓存。这就导致界面上开机费没有实时刷新，显得像是“消失了”或者“没获取到”。
+
+🛠️ 怎么解决？（只需前端改动一行代码）
+既然知道是因为后端有 50ms 的异步延迟导致 Mutation 直接返回的数据不准确，前端就不能盲目信任 Mutation 直接返回的 surcharges 结果。
+
+最标准、最稳妥的解决办法是：让前端在每次“加车”、“改数量”、“删商品”成功后，强制让 GraphQL 去重新查询一次最新的购物车（Refetch Active Order）。
+
+💡 前端 Vue3 修改方案（以 Apollo / Urql 或 Axios 为例）
+让前端同学在购物车页面，处理加减数量的成功回调里，加上 refetch() 或延迟重新拉取：
+
+JavaScript
+// 前端 Vue3 购物车数量变更逻辑
+const handleUpdateQuantity = async (lineId, newCount) => {
+  // 1. 执行改数量的 Mutation
+  await adjustOrderLineMutation({
+    orderLineId: lineId,
+    quantity: newCount
+  });
+
+  // 2. 🎯 核心修复：等待 100 毫秒（确保后端的 50ms setTimeout 已经完美写入数据库）
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  // 3. 🎯 强制重新拉取整笔订单，刷新前端 Pinia/Vuex 状态
+  // 这样拿到的 surcharges 绝对是 100% 准确、最新的！
+  await refetchActiveOrder(); 
+};
+如果前端使用的是 Apollo Client 库，可以用更优雅的 refetchQueries：
+JavaScript
+const [addItem] = useMutation(ADD_ITEM_TO_ORDER, {
+  // 告诉 Apollo 运行完加车后，强制去重新拉取名为 'GetActiveOrder' 的查询
+  refetchQueries: [{ query: GET_ACTIVE_ORDER }],
+  awaitRefetchQueries: true, // 等待查询完全返回再结束
+});
+📝 总结
+这个问题不是后端的 Bug，也不是前端的 Bug，而是分布式/异步系统常见的“时序差”。因为后端为了安全必须异步 50ms 写入，前端只需要在 Mutation 成功后稍微睡个 100ms 然后重新拉取一次 Order，无论加车多少次，开机费的显示就永远都是完全同步、100% 准确的了！

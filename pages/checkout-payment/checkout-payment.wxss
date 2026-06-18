@@ -178,6 +178,36 @@ page {
   color: #165DFF;
 }
 
+/* 🔑 附加费（开机费/起批费）行
+   与 checkout-shipping 保持一致的橙色警告样式
+   提示用户"未买满起批量触发的附加费" */
+.surcharge-row {
+  color: #FF7D00;
+  background-color: #FFF7E6;
+  padding: 8rpx 12rpx;
+  margin: 4rpx 0;
+  border-radius: 8rpx;
+  border: 1rpx solid #FFD591;
+  height: auto;        /* 覆盖 .total-row 的固定 44rpx 高度 */
+  min-height: 44rpx;
+}
+.surcharge-row .total-label {
+  color: #D4380D;
+  font-size: 24rpx;
+  flex: 1;
+  padding-right: 12rpx;
+  word-break: break-all;
+}
+.surcharge-row .total-value {
+  color: #FF7D00;
+  font-weight: 600;
+  font-size: 26rpx;
+  flex-shrink: 0;
+}
+.text-warning {
+  color: #FF7D00;
+}
+
 /* ==============================
    支付信息（支付页面特有，保持设计风格一致）
 ============================== */
