@@ -11,7 +11,12 @@
   <view class="user-card" wx:if="{{!isLoading}}">
     <view class="user-info">
       <!-- 头像 -->
-      <image class="avatar" src="{{userAvatarUrl}}" mode="aspectFill"></image>
+      <view>
+        <view>
+          <image class="avatar" src="{{userAvatarUrl}}" mode="aspectFill"></image>
+        </view>
+        <view style="height: 120rpx;"></view>
+      </view>
       <!-- 信息区域：昵称 + 姓名 + 手机号 分层展示 -->
       <view class="user-text">
         <view class="flex justify-between">
@@ -25,7 +30,14 @@
             <view class="user-name mb-2" wx:if="{{userName}}">姓名：{{userName}}</view>
             <view class="user-phone mb-2" wx:if="{{userMobile}}">手机号：{{userMobile}}</view>
             <view class="user-company mb-2" wx:if="{{companyInfo}}">{{companyInfo}}</view>
-            <view class="user-company mb-2" wx:if="{{channelCode}}">{{channelCode}}</view>
+            <!-- 🔑 渠道行：可点击切换渠道
+                 点击 → onChannelCodeTap → 弹 modal 输入新 code → app.switchChannel -->
+            <view class="user-channel-line mb-2" wx:if="{{channelCode}}" bindtap="onChannelCodeTap" hover-class="user-channel-line-hover">
+              <!-- <text class="user-channel-label">渠道：</text> -->
+              <!-- user-channel-value -->
+              <text class="user-channel-text">{{channelCode}}</text>
+              <!-- <text class="user-channel-switch-icon">⇄ 切换</text> -->
+            </view>
             <!-- <view class="user-invoice" wx:if="{{invoiceInfo}}">发票信息：{{invoiceInfo}}</view> -->
           </view>
 
@@ -55,9 +67,7 @@
   <!-- 操作按钮组（宽松大间距） -->
   <view class="btn-group" wx:if="{{!isLoading}}">
     <!-- <button class="btn-primary" bindtap="updateUserInfo2">注册/更新</button> -->
-    <button class="btn-primary {{(!isLogin && !isAgreed) ? 'is-disabled' : ''}}"
-            bindtap="updateUserInfo2"
-            hover-class="{{(!isLogin && !isAgreed) ? '' : 'btn-primary-active'}}">
+    <button class="btn-primary {{(!isLogin && !isAgreed) ? 'is-disabled' : ''}}" bindtap="updateUserInfo2" hover-class="{{(!isLogin && !isAgreed) ? '' : 'btn-primary-active'}}">
       {{isLogin ? '更新信息' : '用户注册'}}
     </button>
     <!-- url="/pages/order-history/order-history" -->
@@ -69,7 +79,7 @@
   <view class="agreement" wx:if="{{!isLoading}}">
     <checkbox-group bindchange="checkboxChange" wx:if="{{!isLogin}}" class="agreement-checkbox">
       <label class="agreement-label">
-        <checkbox value="agreed" checked="{{!!isAgreed}}" color="#165DFF"/>
+        <checkbox value="agreed" checked="{{!!isAgreed}}" color="#165DFF" />
         <text class="agreement-text">我已阅读并同意</text>
       </label>
     </checkbox-group>

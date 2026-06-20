@@ -134,7 +134,7 @@ Page({
       // 把同步放在前面：先确保服务端数据完整，再单次拉取作为权威数据
       await this.syncLocalItemsToServer();
 
-      await this._fetchAndDisplayCart(0, myVersion);
+      await this._fetchAndDisplayCart(myVersion);
     } catch (error) {
       console.error('[CART] ❌ 加载服务器购物车失败:', error);
       // 出错时关掉 loading + 清空 cart（让用户看到明确的空态）
@@ -154,38 +154,34 @@ Page({
   },
 
   // 🔑 单独抽出的"拉取 + 展示"逻辑
-  // 支持检测服务端 surcharges 计算延迟的 bug，自动重试
+  // 设计原则：单次 fetch，**不重试**。等待时间只在 fetch 之前一次性给足。
   // 严格按照 static\tabbar\refer-async-setup-fee.txt 方案：
   //   - 后端 Surcharge strategy 用 setTimeout(..., 50) 异步写入
   //   - 前端必须在 mutation 成功后等 >50ms 再 refetch
-  //   - 检测到 missing surcharge（total > sum(分项)）自动 retry
-  async _fetchAndDisplayCart(retryCount = 0, version = 0) {
-    const MAX_RETRIES = 5;            // 增加到 5 次（之前 3 次不够）
-    const INITIAL_DELAY = 250;        // 初始延迟：250ms（> 100ms，参考 refer-async-setup-fee.txt）
-    const RETRY_DELAY = 1000;         // retry 间隔：1000ms（> 50ms，给后端充分时间）
+  //   - 用 300ms 初始延迟覆盖后端 50ms + 网络 RTT 余量
+  // 不再做：
+  //   - activeOrder 为空时的 retry（用户等太久体验差，且新版后端已修复 race）
+  //   - surcharges 缺失时的 retry（同上）
+  //   改用：单次 fetch + 直接写入 UI，surcharges 缺失只在 console.warn
+  async _fetchAndDisplayCart(version = 0) {
+    const INITIAL_DELAY = 300;       // 初始延迟：300ms（> 后端 50ms + 网络 RTT 余量）
+    const TAG = `[FETCH v${version} attempt 1/1]`;
 
-    const TAG = `[FETCH v${version} attempt ${retryCount + 1}/${MAX_RETRIES + 1}]`;
     console.log(`========== ${TAG} START ==========`);
 
     // 🔑 关键修复（参考 static\tabbar\refer-async-setup-fee.txt）：
     // 后端 Vendure Surcharge strategy 使用了 setTimeout(..., 50) 异步写入
     // 立即 fetch 会拿到 stale surcharges（特别是新加车、改数量后）
-    // 解决方案：每次 fetch 前等 250ms（> 后端 50ms + 网络往返余量）
+    // 解决方案：fetch 前等 300ms（> 后端 50ms + 网络往返余量）
     //
     // 适用场景：
     // 1. 从 variant 页加车后回 cart：variant 已经发了 addItemToOrder mutation
     //    cart 立即 fetch → 撞在 50ms 窗口 → surcharges 缺失
     // 2. cart 改数量（adjustOrderLine）：mutation 返回时 50ms 还没到
     //    立即 refetch → surcharges 是上一次的旧值
-    if (retryCount === 0) {
-      console.log(`${TAG} ⏱ 初始延迟 ${INITIAL_DELAY}ms（等待后端 setTimeout 50ms 写入 surcharges）...`);
-      await new Promise(resolve => setTimeout(resolve, INITIAL_DELAY));
-      console.log(`${TAG} ⏱ 初始延迟结束，开始 fetch`);
-    } else {
-      console.log(`${TAG} ⏱ retry 延迟 ${RETRY_DELAY}ms...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      console.log(`${TAG} ⏱ retry 延迟结束，开始 fetch`);
-    }
+    console.log(`${TAG} ⏱ 初始延迟 ${INITIAL_DELAY}ms（等待后端 setTimeout 50ms 写入 surcharges）...`);
+    await new Promise(resolve => setTimeout(resolve, INITIAL_DELAY));
+    console.log(`${TAG} ⏱ 初始延迟结束，开始 fetch`);
 
     // 🔑 版本守卫：若在等待/请求过程中用户又触发了新 fetch，
     // 旧 fetch 拿到响应后检查 version，若不一致则放弃写入（防止 stale 数据覆盖）
@@ -251,18 +247,10 @@ Page({
     }
 
     if (!data?.activeOrder) {
-      // 🔑 关键修复：不要立即判定"购物车为空"
-      // 场景：用户刚在 variant 页 addItemToOrder，cart 立即 fetch
-      //   → 后端 activeOrder 可能还没完全建好 → 返回 null
-      //   → 如果此时 setData({cartItems: []}) + loadServerCart.finally(isLoading=false)
-      //   → 用户看到 "采购车是空的" splash 一帧
-      // 解决：把它当 "数据还没准备好" 处理，保持 isLoading=true 继续 retry
-      if (retryCount < MAX_RETRIES) {
-        console.log(`${TAG} 📭 activeOrder 为空，retry ${retryCount + 1}/${MAX_RETRIES}（保持 isLoading=true，避免 splash empty）`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        return this._fetchAndDisplayCart(retryCount + 1, version);
-      }
-      console.log(`${TAG} 📭 activeOrder 仍为空，重试 ${MAX_RETRIES} 次后放弃，清空 cartItems`);
+      // 🔑 单次 fetch，没有 retry。直接判定"购物车为空"并显示
+      // 后端新版已修复 race condition，正常情况下 activeOrder 不会为 null
+      // 如果仍为 null（极端网络/服务端问题），用户看到空态比看到 loading 更清楚
+      console.log(`${TAG} 📭 activeOrder 为空，清空 cartItems 并显示空态`);
       this.setData({
         serverOrder: null,
         cartItems: [],
@@ -350,15 +338,12 @@ Page({
       };
     });
 
-    // 🔑 兜底修复：检测服务端 surcharges 异步计算延迟
-    // 即使加了 250ms 延迟，边缘 case 下后端可能更慢，再用检测+重试兜底
-    // 现象：totalWithTax 已经包含了 N 个 surcharge 的金额（正确），
-    // 但 surcharges 数组只有 < N 个（stale / 异步计算中）
-    // 解决：检测到差额时，再等待后重试
+    // 🔑 诊断信息：检测后端 surcharges 是否缺失（仅 warn，不再 retry）
     // 公式：totalWithTax 应等于 subTotalWithTax + sum(surcharges) + shippingWithTax
+    // 后端新版已修复 race condition，正常情况下 totalDelta 应 ≈ 0
     const expectedTotal = subTotalWithTax + surchargesTotal + shippingWithTax;
     const totalDelta = totalWithTax - expectedTotal;
-    const hasMissingSurcharges = totalDelta > 0;  // 总价 > 各项之和 = 有 missing surcharge
+    const hasMissingSurcharges = totalDelta > 0;
 
     console.log(`${TAG} 🧮 总额校验:`);
     console.log(`${TAG}    subTotalWithTax (${(subTotalWithTax / 100).toFixed(2)} 元) + ` +
@@ -367,25 +352,11 @@ Page({
       `expectedTotal (${(expectedTotal / 100).toFixed(2)} 元)`);
     console.log(`${TAG}    totalWithTax (实际) = ${(totalWithTax / 100).toFixed(2)} 元`);
     console.log(`${TAG}    totalDelta (差额) = ${totalDelta} = ${(totalDelta / 100).toFixed(2)} 元`);
-    console.log(`${TAG}    hasMissingSurcharges = ${hasMissingSurcharges}`);
-
-    if (hasMissingSurcharges && retryCount < MAX_RETRIES) {
-      console.warn(`${TAG} ⚠️ 检测到 missing surcharges（差额 ${(totalDelta / 100).toFixed(2)} 元）。` +
-        `这通常意味着后端的 setTimeout(50ms) 还没把 surcharge 写进 DB。`);
-      console.warn(`${TAG} ⏳ 等待 ${RETRY_DELAY}ms 后重试 (${retryCount + 1}/${MAX_RETRIES})...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-
-      // 🔑 retry 前再次检查版本
-      if (version !== this._fetchVersion) {
-        console.log(`${TAG} ⛔ v${version} retry 时已过期，放弃重试`);
-        return;
-      }
-      return this._fetchAndDisplayCart(retryCount + 1, version);
-    }
 
     if (hasMissingSurcharges) {
-      console.warn(`${TAG} ❌ 重试 ${MAX_RETRIES} 次后仍有 missing surcharges (delta=${totalDelta})，` +
-        `放弃。后端 Surcharge strategy 可能需要排查。`);
+      console.warn(`${TAG} ⚠️ 检测到 missing surcharges（差额 ${(totalDelta / 100).toFixed(2)} 元）。` +
+        `这通常意味着后端的 setTimeout(50ms) 还没把 surcharge 写进 DB。` +
+        `新版后端已修复 race，按理不应出现，仅做诊断告警。`);
     } else {
       console.log(`${TAG} ✅ 数据完整 (surcharges=${surcharges.length}, delta=0)，写入 UI`);
     }
@@ -409,10 +380,7 @@ Page({
 
     this.updateCartDisplay(cartItems);
     // 🔑 关键修复：成功路径必须显式 set isLoading=false
-    // 之前依赖 loadServerCart.finally / loadCart.finally 设置，
-    //   但当 _fetchAndDisplayCart 在 !data?.activeOrder 分支里被替换为 retry 时，
-    //   外层 finally 会先把 isLoading=false 一次，cartItems=[]，造成 splash empty
-    // 现在只有真正写入 cartItems 时才关掉 loading，retry/empty 期间保持 isLoading=true
+    // 单次 fetch 设计：fetch 完成后（不论 activeOrder 是否存在）都关掉 loading
     this.setData({ isLoading: false });
     console.log(`========== ${TAG} END (写入完成) ==========`);
   },

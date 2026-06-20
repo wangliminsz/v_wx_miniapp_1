@@ -15,6 +15,13 @@ App({
     // （防止 tabBar 切换等场景反复触发 handleChannel）
     currentChannel: "",
 
+    // 🔑 渠道切换后通知 home 页面刷新 collections 的 flag
+    // 触发位置：switchChannel() 成功切换后置为 true
+    // 消费位置：home.js onShow 检查并调用 reloadForChannelSwitch()，然后清回 false
+    // 设计原因：tabBar 页面在不同的页面栈中，从 mine.js 的 getCurrentPages() 找不到 home
+    //   （即使能找到，home 此刻被 mine 覆盖、不在屏幕上），所以用全局 flag 跨栈通知
+    _homeNeedsReload: false,
+
     // 最近一次启动参数（来自 onLaunch/onShow/wx.getEnterOptionsSync），
     // 供其他模块按需消费
     lastEnterOptions: null,
@@ -216,19 +223,165 @@ App({
     // 只有当真的有 channel 参数，且与当前不同时才处理（避免 tabBar 切换等场景反复触发）
     if (newChannel && newChannel !== this.globalData.currentChannel) {
       console.log('onShow 检测到新渠道:', newChannel);
-      this.globalData.currentChannel = newChannel;
-      // 持久化新渠道
-      try {
-        wx.setStorageSync(STORAGE_KEY_CHANNEL, {
-          code: newChannel,
-          updatedAt: Date.now(),
-        });
-      } catch (e) {}
-      // 异步获取新渠道 token，不阻塞 onShow 其它逻辑
-      this.getChannelToken(newChannel);
+      // 🔑 复用统一的渠道切换逻辑
+      this.applyChannelChange(newChannel, { source: 'onShow' });
     } else {
       console.log('onShow 渠道未变化（或无 channel），跳过。currentChannel=', this.globalData.currentChannel);
     }
+  },
+
+  // 🔑 渠道切换的核心逻辑（提取为可复用方法）
+  // 三处入口共用：onShow（启动参数）、switchChannel（用户手动切换）、refreshChannelFromEnterOptions（热启动刷新）
+  // 副作用：
+  //   1) 持久化到 STORAGE_KEY_CHANNEL
+  //   2) 更新 globalData.currentChannel / activeChannelCode / activeChannelToken
+  //   3) 🔑 同步更新 globalData.lastEnterOptions（让任何读 lastEnterOptions.query.channel 的代码拿到正确值）
+  //   4) 不在这里清登录态 —— 由调用方按需决定（手动切换需要清；启动参数进入时一般不清）
+  //   5) 不在这里触发 initAuthFlow —— 让 page 在 onShow 时自然触发，逻辑更解耦
+  //
+  // @param {string} newCode  新的渠道代码
+  // @param {object} options
+  //   - source:  切换来源标识（'onShow' | 'manual' | 'refresh'），仅用于日志
+  // @returns {Promise<{changed: boolean, code: string, token: string}>}
+  async applyChannelChange(newCode, { source = 'unknown' } = {}) {
+    if (!newCode) {
+      console.warn(`[channel] applyChannelChange 收到空 code，source=${source}，忽略`);
+      return { changed: false, code: this.globalData.currentChannel, token: this.globalData.activeChannelToken };
+    }
+
+    if (newCode === this.globalData.currentChannel) {
+      console.log(`[channel] 渠道未变 (${newCode})，source=${source}，跳过 applyChannelChange`);
+      return { changed: false, code: newCode, token: this.globalData.activeChannelToken };
+    }
+
+    console.log(`[channel] 切换渠道: ${this.globalData.currentChannel} → ${newCode} (source=${source})`);
+
+    // 1) 先更新 currentChannel，避免并发 onShow / switchChannel 重复触发
+    this.globalData.currentChannel = newCode;
+
+    // 2) 持久化（与 onLaunch / onShow 行为完全一致）
+    try {
+      wx.setStorageSync(STORAGE_KEY_CHANNEL, {
+        code: newCode,
+        updatedAt: Date.now(),
+      });
+    } catch (e) {
+      console.warn('[channel] applyChannelChange 持久化失败:', e);
+    }
+
+    // 3) 拉取新渠道 token（getChannelToken 内部会 set globalData.activeChannelCode/Token）
+    await this.getChannelToken(newCode);
+
+    // 4) 🔑 同步更新 lastEnterOptions（让任何读 lastEnterOptions.query.channel 的代码拿到正确值）
+    //    场景：用户从搜索/最近使用进入（query: {}），然后在 mine 页面手动切换渠道
+    //    → 切换后 lastEnterOptions.query.channel 应反映用户手动选的新渠道，保持全局一致
+    //    保留原有的 path/scene/mode/apiCategory 等结构，只覆盖 query.channel
+    const prevOptions = this.globalData.lastEnterOptions || {};
+    const newOptions = {
+      ...prevOptions,
+      query: {
+        ...(prevOptions.query || {}),
+        channel: newCode,
+      },
+    };
+    this.globalData.lastEnterOptions = newOptions;
+    try {
+      wx.setStorageSync('lastEnterOptions', newOptions);
+      console.log(`[channel] 已同步更新 lastEnterOptions.query.channel = ${newCode}`);
+    } catch (e) {
+      console.warn('[channel] 同步更新 lastEnterOptions 失败:', e);
+    }
+
+    return {
+      changed: true,
+      code: newCode,
+      token: this.globalData.activeChannelToken,
+    };
+  },
+
+  // 🔑 公开 API：用户手动切换渠道
+  // 调用方：mine.js 的 onChannelCodeTap
+  // 行为（与 onLaunch 的鉴权启动完全对齐）：
+  //   1) 验证新 code 有效性（通过 getChannelToken → GraphQL getChannelTokenByCode）
+  //   2) 应用切换（复用 applyChannelChange）— 持久化 + 更新 currentChannel
+  //   3) 清理本地登录态（旧 token + last-auth-channel-*）
+  //   4) 🔑 关键：重新触发 initAuthFlow，让 proceedToGetOpenId 用 NEW channel 的 token
+  //      调 Vendure 校验用户在新渠道是否有账号，命中则自动登录 + 锁定 last-auth-channel-token
+  //      这个调用挂在 loginPromise 上，覆盖旧的 loginPromise，page 重新 onShow 时会 await 这个新 promise
+  //   5) await loginPromise 让调用方（mine.js）能拿到最终的 isLogin 状态
+  //
+  // @param {string} newCode
+  // @returns {Promise<{success: boolean, message: string, code?: string, isLogin?: boolean}>}
+  async switchChannel(newCode) {
+    if (!newCode || !String(newCode).trim()) {
+      return { success: false, message: '渠道代码不能为空' };
+    }
+    newCode = String(newCode).trim();
+
+    // 1) 验证：通过 GraphQL 拿 token，拿不到就视为无效
+    await this.getChannelToken(newCode);
+    if (!this.globalData.activeChannelToken) {
+      console.warn(`[channel] switchChannel 失败：code=${newCode} 拿不到 token`);
+      return { success: false, message: '渠道代码无效或已失效' };
+    }
+
+    // 2) 应用切换
+    const result = await this.applyChannelChange(newCode, { source: 'manual' });
+    if (!result.changed) {
+      return { success: true, message: '已经是该渠道', code: newCode, isLogin: this.globalData.isLogin };
+    }
+
+    // 3) 🔑 清理本地登录态（强制走 re-auth）
+    try {
+      wx.removeStorageSync('vendure-auth-token');
+      wx.removeStorageSync('last-auth-channel-code');
+      wx.removeStorageSync('last-auth-channel-token');
+    } catch (e) {
+      console.warn('[channel] switchChannel 清理 storage 失败:', e);
+    }
+    this.globalData.lastChannelToken = '';
+    this.globalData.isLogin = false;
+    this.globalData.customerInfo = null;
+    // 清掉本地购物车（旧渠道的购物车不应跨渠道带过去）
+    try {
+      wx.removeStorageSync('cart_items');
+    } catch (e) {}
+    this.globalData.cartItems = [];
+    this.globalData.cartTotalCount = 0;
+
+    // 4) 🔑 核心：重新触发鉴权流程（与 onLaunch 的 B4 步骤完全一致）
+    //    initAuthFlow 内部会：
+    //      - 看到 token=null + lastChannel='' → 走 proceedToGetOpenId
+    //      - proceedToGetOpenId 用 NEW channel 的 activeChannelToken 调 Vendure 校验 openid
+    //      - 命中则 setLoginStatus(true) + 写入 last-auth-channel-token = NEW channel token
+    //      - 未命中则 setLoginStatus(false)，引导用户去注册
+    this.loginPromise = this.initAuthFlow().then(() => {
+      if (this.globalData.isLogin) {
+        this.syncServerCartCount();
+      }
+    });
+
+    // 5) 等待新鉴权完成，让调用方能直接拿到最终 isLogin
+    try {
+      await this.loginPromise;
+    } catch (e) {
+      console.error('[channel] switchChannel 重新鉴权失败:', e);
+    }
+
+    // 6) 🔑 通知 home 页面下次 onShow 时刷新 collections
+    //    tabBar 页面在不同页面栈中，从 mine 的 getCurrentPages() 找不到 home
+    //    所以用 flag 跨栈通知，home.onShow 检查到后会调用 reloadForChannelSwitch()
+    this.globalData._homeNeedsReload = true;
+    console.log(`[channel] 已置 _homeNeedsReload=true，等待 home.onShow 消费`);
+
+    console.log(`[channel] switchChannel 完成：${newCode}，isLogin=${this.globalData.isLogin}`);
+
+    return {
+      success: true,
+      message: this.globalData.isLogin ? '切换成功并已自动登录' : '切换成功，请在新渠道注册或登录',
+      code: newCode,
+      isLogin: this.globalData.isLogin,
+    };
   },
 
   // 可选：手动刷新渠道参数（供其他模块按需调用，例如在某个页面入口主动拉取最新）

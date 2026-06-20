@@ -17,7 +17,7 @@
   background: #fff;
   border-radius: 16rpx; /* 规范8px圆角，rpx适配 */
   padding-top: 64rpx; /* 规范内边距 */
-  padding-bottom: 64rpx; /* 规范内边距 */
+  padding-bottom: 32rpx; /* 规范内边距 */
   padding-left: 64rpx; /* 规范内边距 */
   padding-right: 64rpx; /* 规范内边距 */
   margin-bottom: 48rpx; /* 卡片和按钮间距，8px倍数 */
@@ -28,6 +28,7 @@
 .user-info {
   display: flex;
   align-items: center;
+  gap:10rpx;
 }
 
 /* 头像：规范尺寸 */
@@ -46,6 +47,7 @@
   display: flex;
   flex-direction: column;
   gap: 8rpx; /* 规范间距 */
+  margin-top: 20rpx;
 }
 
 /* 昵称：主标题层级 24px */
@@ -72,6 +74,45 @@
   font-size: 30rpx; /* 对应14px */
   color: #4E5969;
   line-height: 1.4;
+}
+
+/* 🔑 渠道行：可点击切换渠道
+   风格：浅灰底标签 + 蓝色 value + 蓝色 "⇄ 切换" icon
+   整行用 hover-class 模拟微信标准点击反馈 */
+.user-channel-line {
+  display: flex;
+  align-items: center;
+  font-size: 30rpx;
+  color: #4E5969;
+  line-height: 1.4;
+  padding: 4rpx 12rpx;
+  margin-left: -12rpx;        /* 让可点击区域向左扩到对齐其他行 */
+  border-radius: 8rpx;
+  align-self: flex-start;     /* 防止在 flex 容器里被拉满整行 */
+}
+.user-channel-line-hover {
+  background-color: #F2F3F5;  /* 微信标准点击反馈色 */
+}
+.user-channel-label {
+  color: #86909C;
+  flex-shrink: 0;
+}
+
+
+.user-channel-text {
+  color: #ffffff;
+}
+
+
+.user-channel-value {
+  color: #165DFF;             /* 蓝字暗示可点击 */
+  font-weight: 500;
+}
+.user-channel-switch-icon {
+  margin-left: 12rpx;
+  font-size: 24rpx;
+  color: #165DFF;
+  flex-shrink: 0;
 }
 
 /* Vendure注册状态：规范样式 */

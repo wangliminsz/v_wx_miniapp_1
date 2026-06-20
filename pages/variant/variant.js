@@ -122,8 +122,7 @@ Page({
       let hintText = '';
       if (minAmount > 0 && feeAmountCents > 0) {
         const feeYuan = (feeAmountCents / 100).toFixed(2);
-        // 形如："如采购数量低于 100，将收取开机费 ¥ 300.00"
-        hintText = `如采购数量低于 ${minAmount}，将收取开机费 ¥ ${feeYuan}`;
+        hintText = `数量 < ${minAmount}, 开机费 ¥ ${feeYuan}`;
         this.setData({
           minOrderAmountForSetupFee: minAmount,
           setupFeeAmount: feeAmountCents,

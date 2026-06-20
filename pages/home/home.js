@@ -42,6 +42,33 @@ Page({
     if (app.globalData.isLogin) {
       app.syncServerCartCount();
     }
+
+    // 🔑 渠道切换后通知 home 刷新 collections
+    // 触发位置：app.switchChannel() 切换成功后置 _homeNeedsReload=true
+    // 为什么在 onShow 而非 onLoad：onLoad 只在首次进入时跑一次
+    //   之后用户切到其他 tab 再切回来只触发 onShow，不触发 onLoad
+    //   所以必须用 onShow + flag 才能在用户再次切到 home tab 时拉到新渠道的数据
+    if (app.globalData._homeNeedsReload) {
+      console.log('[HOME] onShow 检测到 _homeNeedsReload=true，触发 reloadForChannelSwitch');
+      app.globalData._homeNeedsReload = false;  // 立刻清 flag，避免重复触发
+      this.reloadForChannelSwitch();
+    }
+  },
+
+  // 🔑 渠道切换后强制刷新 collections
+  // 调用方：mine.js 的 onChannelCodeTap（用户手动切换渠道后）
+  // 与 onLoad 的区别：onLoad 是一次性的，reloadForChannelSwitch 可以被反复调用
+  //   1) 清空旧 collections（避免新旧数据混在一起）
+  //   2) 走 loadCollections()，它内部会读最新的 app.globalData.isLogin
+  //      （switchChannel 已经等 initAuthFlow 跑完，isLogin 是新渠道的结果）
+  //   3) 重新请求 getCollections()，graphqlClient 会用新渠道的 token
+  reloadForChannelSwitch() {
+    console.log('[HOME] reloadForChannelSwitch — 重新拉取新渠道的 collections');
+    this.setData({
+      collections: [],
+      collectionsLoading: true,
+    });
+    return this.loadCollections();
   },
 
   onPullDownRefresh() {

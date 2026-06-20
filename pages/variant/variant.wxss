@@ -173,7 +173,8 @@
 .price-section {
   display: flex;
   align-items: baseline;
-  gap: 16rpx;
+  /* justify-content: space-between; */
+  /* gap: 72rpx; */
   margin-bottom: 12rpx;
   flex-wrap: wrap;
 }
@@ -228,7 +229,17 @@
 
 /* 团购/集团价说明（一口价占位说明） */
 .group-hint {
-  /* 复用 .tier-hint 灰色小字风格 */
+  display: flex;
+  flex-direction: column;
+  /* gap: 2rpx;              */
+  /* 行间距：4rpx → 2rpx，更紧凑 */
+  width: 100%;
+  margin-top: 8rpx;
+  font-size: 26rpx;      /* 28rpx → 26rpx，更精致 */
+  font-weight: 500;
+  color: #86909C;
+  line-height: 1;      
+  /* 1.4 → 1.2，收紧行高 */
 }
 
 .group-hint-text {

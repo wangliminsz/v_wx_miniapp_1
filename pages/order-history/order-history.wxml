@@ -85,8 +85,20 @@
           <view class="fulfillment-details" wx:if="{{item.fulfillmentSummary.details.length > 0}}">
             <view wx:for="{{item.fulfillmentSummary.details}}" wx:for-item="fl" wx:for-index="flIndex" wx:key="fulfillmentIndex" class="fulfillment-group">
               <view class="fulfillment-group-header">
-                <text class="fl-title">第 {{fl.fulfillmentIndex}} 次发货</text>
-                <text wx:if="{{fl.fulfillmentDate}}" class="fl-date">{{fl.fulfillmentDate}}</text>
+
+                <view class="flex flex-col">
+
+                  <view>
+                    <text class="fl-title">第 {{fl.fulfillmentIndex}} 次发货</text>
+                  </view>
+
+                  <view>
+                    <text wx:if="{{fl.fulfillmentDate}}" class="fl-date">{{fl.fulfillmentDate}}</text>
+                  </view>
+
+                </view>
+
+
                 <text class="fl-status" wx:if="{{!fl.trackingCode}}">{{fl.statusText}}</text>
                 <block wx:else>
 

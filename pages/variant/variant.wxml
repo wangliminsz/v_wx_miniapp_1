@@ -57,13 +57,18 @@
           <!-- 🔑 关键：使用 displayPriceWithTax（由 basePriceWithTax × 当前 quantity 对应 tier 的 rate 计算得出）
                而不是 variant.priceWithTax（context-dependent，会随 cart 数量变化）。
                保持与 H5 一致：variant 详情页显示基于 quantity 的 tiered 价，cart 显示 context-dependent 计算价。 -->
-          <text class="product-price">¥ {{displayPriceWithTax / 100}} 元/kg</text>
+          
+          <view>
+            <text class="product-price">¥ {{displayPriceWithTax / 100}} 元/kg</text>
+          </view>
+
+          <view style="width: 36rpx;"></view>
           <!-- 🔑 渠道级开机费提示（仅在两 custom fields 都 > 0 时显示）
                来自 query GetChannelSetupFees
                形如："如采购数量低于 100，将收取开机费 ¥ 300.00"
                位置：紧贴价格下方、阶梯价说明之上 -->
           <view class="setup-fee-hint" wx:if="{{setupFeeHintText && setupFeeHintText !== ''}}">
-            <text class="setup-fee-hint-icon">⚠️</text>
+            <!-- <text class="setup-fee-hint-icon">⚠️</text> -->
             <text class="setup-fee-hint-text">{{setupFeeHintText}}</text>
           </view>
           <!-- 阶梯价规则说明（从后端 volumePrices 动态渲染 + 预计算区间文本 + 整数化价格）

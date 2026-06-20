@@ -274,6 +274,182 @@ Page({
     });
   },
 
+  // 🔑 渠道切换入口
+  // 触发位置：mine.wxml 中"渠道：xxx ⇄ 切换"那一行
+  // 流程：
+  //   1) 弹 wx.showModal（editable=true）让用户输入新 code
+  //   2) 调用 app.switchChannel() 完成切换
+  //   3) 刷新本页 + 通知所有 page 重新 onShow（让 cart 拿到新 token）
+  // 注意：切换会强制清掉登录态（安全设计），所以即使从 blank_channel 切到真渠道
+  //   也需要重新走登录流程（云数据库里有记录的话会自动登录）
+  async onChannelCodeTap() {
+    const current = app.globalData.activeChannelCode || 'blank_channel';
+    const isBlank = !current || current === 'blank_channel';
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    if (current !== "blank_channel") {
+      return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+    }
+    
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // 2 步确认：先告诉用户会发生什么，再让用户输入
+    const confirmRes = await new Promise(resolve => {
+      wx.showModal({
+        title: '切换渠道',
+        content: isBlank
+          ? '当前为默认渠道。\n\n 确认要切换吗？'
+          : `当前渠道：${current}\n\n 确认要切换吗？`,
+        confirmText: isBlank ? '下一步' : '确认切换',
+        cancelText: '取消',
+        success: resolve,
+        fail: () => resolve({ confirm: false }),
+      });
+    });
+
+    if (!confirmRes.confirm) return;
+
+    // 让用户输入新 code
+    // placeholderText: '例如：default-channel',
+    const inputRes = await new Promise(resolve => {
+      wx.showModal({
+        title: '请输入新渠道代码',
+        content: '',
+        editable: true,
+        confirmText: '切换',
+        cancelText: '取消',
+        success: resolve,
+        fail: () => resolve({ confirm: false }),
+      });
+    });
+
+    if (!inputRes.confirm) return;
+    const newCode = (inputRes.content || '').trim();
+    if (!newCode) {
+      return wx.showToast({ title: '渠道代码不能为空', icon: 'none' });
+    }
+    if (newCode === current) {
+      return wx.showToast({ title: '渠道未变化', icon: 'none' });
+    }
+    if (newCode === "__default_channel__") {
+      return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+    }
+
+    // 执行切换
+    wx.showLoading({ title: '正在切换渠道...', mask: true });
+    let result;
+    try {
+      // 🔑 防御：如果 app.switchChannel 未定义（旧版本或缓存），提示用户清除缓存
+      if (typeof app.switchChannel !== 'function') {
+        console.error('[mine] app.switchChannel is not a function. ' +
+          'app keys:', Object.keys(app).slice(0, 20).join(', '));
+        throw new Error('app.switchChannel 不可用，请清除微信开发者工具缓存后重试');
+      }
+      result = await app.switchChannel(newCode);
+    } catch (e) {
+      wx.hideLoading();
+      console.error('[mine] switchChannel 抛出异常:', e);
+      return wx.showToast({
+        title: '切换失败：' + (e.message || '网络异常'),
+        icon: 'none',
+        duration: 2500,
+      });
+    }
+    wx.hideLoading();
+
+    if (!result || !result.success) {
+      return wx.showToast({
+        title: (result && result.message) || '切换失败',
+        icon: 'none',
+        duration: 2500,
+      });
+    }
+
+    // 切换成功：立即切到 home tab，再做其他后台工作
+    // 🔑 关键：switchTab 在 setData 之前调用，确保 native 第一时间处理页面切换
+    //   1) wx.switchTab 发送消息给 native（立即返回）
+    //   2) 紧跟的 setData 也发送消息给 native
+    //   3) native 优先处理 switchTab（页面被切走），再处理 setData（更新隐藏的 mine）
+    //   4) 用户看到的是：mine 页面 → 几乎瞬间切到 home
+    //   5) mine 的数据更新在后台发生，用户切回 mine tab 时数据已是新 channel 的
+    //
+    // 与之前版本的区别：
+    //   - 之前：setData → await toast (1.8s) → setTimeout(1.5s) → switchTab
+    //     用户看到 mine 的更新状态 + 1.8s toast + 1.5s 等待 = 约 3s 视觉停留
+    //   - 现在：switchTab 立即触发 → 用户只看到 home tab 加载新数据
+    wx.switchTab({
+      url: '/pages/home/home',
+      success: () => {
+        console.log('[mine] switchChannel 成功 → 切到 home tab（直接切换，未显示 mine）');
+      },
+      fail: (err) => {
+        console.warn('[mine] switchTab to home failed (non-fatal):', err);
+        // 即使 switchTab 失败，_homeNeedsReload flag 仍会兜底：
+        // 用户后续手动切到 home tab 时，home.onShow 会检测到 flag 并 reload
+      },
+    });
+
+    // 🔑 更新本页显示（在 switchTab 之后执行，更新的是已被切走的 mine 页面）
+    //    用户切回 mine tab 时能看到新 channel 的状态
+    this.setData({
+      channelCode: result.code,
+      isLogin: result.isLogin,
+      // isLogin=true：新渠道有账号 → 重新拉一次云数据 + Vendure 客户信息
+      // isLogin=false：新渠道无账号 → 清空所有用户态，等用户去注册
+      userNickName: '',
+      userName: '',
+      userMobile: '',
+      companyInfo: '',
+      userInfoExist: false,
+    });
+
+    // 🔑 toast 在切 tab 之后显示（系统级，会跟随页面切换）
+    // 不 await，避免阻塞当前函数
+    wx.showToast({
+      title: result.isLogin ? '切换成功' : '切换成功',
+      icon: result.isLogin ? 'success' : 'none',
+      duration: 1800,
+    });
+
+    // 🔑 刷新其他 tabBar/普通页面（fire-and-forget）
+    //    因为 switchChannel 已经覆盖了 loginPromise，每个 page onShow 里的
+    //    await app.loginPromise 都会拿到 NEW 的 promise，自动等待新鉴权
+    //    mine 已经被隐藏，这里只需要刷新其他还在栈中的页面
+    const pages = getCurrentPages();
+    pages.forEach(p => {
+      if (p && typeof p.onShow === 'function') {
+        try { p.onShow(); } catch (e) { console.warn('[mine] refresh page onShow failed:', e); }
+      }
+    });
+
+    // 🔑 通知 home 页面刷新 collections（如果 home 在页面栈里）
+    //    这是双保险：即使 home 在栈中且 reloadForChannelSwitch 已执行，
+    //    switchTab 之后 home.onShow 还会再检测一次 _homeNeedsReload flag
+    //    （_homeNeedsReload 是在 app.switchChannel() 内部置的，到此还未被 home.onShow 消费）
+    const homePage = pages.find(p => p && p.route === 'pages/home/home');
+    if (homePage && typeof homePage.reloadForChannelSwitch === 'function') {
+      console.log('[mine] home page in stack, trigger reloadForChannelSwitch');
+      try {
+        // 不 await，让 home 的刷新异步进行
+        homePage.reloadForChannelSwitch();
+      } catch (e) {
+        console.warn('[mine] home reloadForChannelSwitch failed:', e);
+      }
+    } else {
+      console.log('[mine] home page NOT in stack, switchTab will activate it');
+    }
+
+    // 🔑 自己的 onShow 也在后台跑一次（fire-and-forget）
+    //    mine 已经被切走，但 onShow 里的 cloudDbRead + fetchVendureCustomerInfo 需要跑
+    //    这样当用户后续切回 mine tab 时，data 已经是新 channel 的
+    this.onShow().catch(e => console.warn('[mine] self onShow refresh failed:', e));
+  
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  
+  },
+
   updateUserInfo2: function () {
     if (!this.data.isLogin && !this.data.isAgreed) {
       wx.showToast({
