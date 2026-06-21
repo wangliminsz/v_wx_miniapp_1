@@ -14,11 +14,22 @@ Page({
       { key: 'Cancelled', label: '取消' },
       { key: 'all', label: '全部' },
     ],
-    isInitialLoad: true,
+    // 🔑 不再使用 isInitialLoad 标志
+    // 原因：之前 onShow 会在每次页面回到前台时都重新拉数据（loadOrders），
+    //      这导致 wx.previewImage（图片预览）关闭后回到本页会触发一次 loading spinner
+    // 现在的策略：只在 onLoad（首次进入）和用户主动操作（搜索/切 tab/pull-to-refresh）时拉取
+    // 与 variant 页一致：onShow 只做轻量级的 cart badge 更新
     searchKeyword: '',
   },
 
-  onLoad() {
+  async onLoad() {
+    // 🔑 P0 Bug Fix：必须 await app 的两个 promise
+    // order-history 调 activeCustomer.orders 需要登录态，
+    // 渠道切换后 loginPromise 被重置过，没等的话会用老 token 拉老渠道的订单
+    await app.initPromise;
+    if (app.loginPromise) {
+      try { await app.loginPromise; } catch (e) { console.warn('order-history: loginPromise rejected', e); }
+    }
     this.loadOrders();
   },
 
@@ -28,17 +39,44 @@ Page({
     });
   },
 
+  // 🔑 关键修复：onShow 不再重新拉数据
+  // 之前的行为：每次页面回到前台（包括 wx.previewImage 关闭后）都触发 loadOrders → 出现 loading spinner
+  // 现在的行为：与 variant 页一致，只做轻量级更新（购物车角标）
+  // 触发重新加载的场景：
+  //   1) 首次进入（onLoad）
+  //   2) 用户点击搜索按钮（onSearchClick）
+  //   3) 用户清空搜索（onSearchClear）
+  //   4) 用户切换 tab（onFilterTap 中的特殊处理）
+  //   5) 用户下拉刷新（onPullDownRefresh）
   onShow() {
-    // Only load orders if it's not the initial load (initial load handled by onLoad)
-    if (!this.data.isInitialLoad) {
-      this.loadOrders();
-    } else {
-      this.setData({ isInitialLoad: false });
+    app.updateCartBadge();
+  },
+
+  // 🔑 用户下拉刷新（onPullDownRefresh）— 替代之前 onShow 自动刷新的能力
+  // 触发场景：用户主动从页面顶部下拉
+  // 为什么这样设计：之前 onShow 自动刷新会在 wx.previewImage 关闭后误触发 loading，
+  //                改成用户主动下拉才刷新，UI 更稳定
+  async onPullDownRefresh() {
+    console.log('[ORDER-HISTORY] onPullDownRefresh → 重新拉取订单');
+    try {
+      // 🔑 showLoading=false：不显示全屏 loading-overlay（用下拉刷新的小转圈）
+      await this.loadOrders({ showLoading: false });
+    } catch (e) {
+      console.error('[ORDER-HISTORY] onPullDownRefresh failed:', e);
+    } finally {
+      // 停止下拉刷新动画（无论成功失败都要停止）
+      wx.stopPullDownRefresh();
     }
   },
 
-  async loadOrders() {
-    this.setData({ isLoading: true });
+  // 🔑 loadOrders 增加 showLoading 参数
+  //  - showLoading=true（默认）: 显示全屏 loading-overlay（用于 onLoad、搜索、切换 tab）
+  //  - showLoading=false: 不显示全屏 overlay（用于 onPullDownRefresh，用下拉刷新的小转圈）
+  // 这样可以避免下拉刷新时出现"全屏 spinner + 小转圈"的双重 loading
+  async loadOrders({ showLoading = true } = {}) {
+    if (showLoading) {
+      this.setData({ isLoading: true });
+    }
 
     try {
       const keyword = (this.data.searchKeyword || '').trim();
@@ -74,7 +112,11 @@ Page({
       console.error('加载订单失败:', error);
       wx.showToast({ title: '加载失败', icon: 'none' });
     } finally {
-      this.setData({ isLoading: false });
+      // 🔑 仅在 showLoading=true 时才关 overlay
+      // showLoading=false（pull-to-refresh）时不要碰 isLoading，避免与下拉刷新的小转圈冲突
+      if (showLoading) {
+        this.setData({ isLoading: false });
+      }
     }
   },
 
@@ -92,6 +134,10 @@ Page({
               currencyCode
               createdAt
               shippingWithTax
+              # 🔑 订单级 custom fields（用户留言等）
+              customFields {
+                customerMessage
+              }
               # 🔑 附加费（开机费/起批费等动态加价）— 与 cart/checkout 同款
               surcharges {
                 id
@@ -153,6 +199,10 @@ Page({
               currencyCode
               createdAt
               shippingWithTax
+              # 🔑 订单级 custom fields（用户留言等）
+              customFields {
+                customerMessage
+              }
               # 🔑 附加费（开机费/起批费等动态加价）— 与 cart/checkout 同款
               surcharges {
                 id
@@ -253,6 +303,13 @@ Page({
       stateLabel: this.getStateLabel(order.state),
       itemCount: (order.lines || []).reduce((sum, line) => sum + line.quantity, 0),
       productNames: (order.lines || []).map(line => line.productVariant.name).join(', '),
+      // 🔑 订单级 custom fields
+      //  - customerMessage: 用户在下单时填的留言（Order.customFields）
+      //  - 后端 schema: Order: [{ name: 'customerMessage', type: 'text', public: true, nullable: true }]
+      //  - 防御处理：customFields 可能为 null（老订单没有该字段），需降级到 ''
+      customerMessage: (order.customFields && typeof order.customFields.customerMessage === 'string')
+        ? order.customFields.customerMessage.trim()
+        : '',
       formattedLines: (order.lines || []).map(line => {
         const setupFeeSurcharge = surchargeBySku.get(line.productVariant.sku);
         return {

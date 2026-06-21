@@ -141,7 +141,29 @@ App({
     this.globalData.currentChannel = channelCode;
     this.globalData.lastEnterOptions = options || null;
 
+    // 🔑 LRU 恢复：优先从 localStorage 读取上次成功的 channel token
+    //   解决 LRU 后 channel code 在 mine 页不显示的问题
+    //   原理：上次成功调用 getChannelToken 时会持久化 active-channel-code/token 到 localStorage
+    //   LRU 后 JS 内存清空，但 localStorage 保留 → onLaunch 时同步读出作为初始值
+    //   后续 await getChannelToken() 会用后端最新值覆盖（双保险）
+    if (channelCode !== 'blank_channel') {
+      try {
+        const cachedCode = wx.getStorageSync('active-channel-code');
+        const cachedToken = wx.getStorageSync('active-channel-token');
+        // 只有当缓存的 code 匹配当前 channelCode 时才用（避免切渠道后用错）
+        if (cachedCode === channelCode && cachedToken) {
+          this.globalData.activeChannelCode = cachedCode;
+          this.globalData.activeChannelToken = cachedToken;
+          console.log(`[onLaunch] LRU 恢复: 从 localStorage 同步读取 channel=${cachedCode}`);
+        }
+      } catch (e) {
+        console.warn('[onLaunch] LRU 恢复失败:', e);
+      }
+    }
+
     // A2. 调用你自定义的接口，安全获取当前渠道 token
+    //   成功时 setData 覆盖 localStorage 的缓存值
+    //   失败时用 last-auth-channel-token 兜底（getChannelToken 内部已处理）
     await this.getChannelToken(channelCode);
 
     // token 完成 (渠道 token 已获取)，resolve tokenPromise
@@ -424,6 +446,11 @@ App({
 
   // ==============================================
   // 👇 调用你自己的 API：getChannelTokenByCode
+  // 🔑 新增：每次成功获取后持久化到 localStorage
+  //   这样 LRU 触发后 onLaunch 可以从 localStorage 秒级恢复，不用等 API 调用
+  //   存储 keys:
+  //     - 'active-channel-code': 最近一次成功的 channel code
+  //     - 'active-channel-token': 最近一次成功的 channel token
   // ==============================================
   async getChannelToken(code) {
 
@@ -459,6 +486,14 @@ App({
             const token = res.data.data.getChannelTokenByCode.token;
             this.globalData.activeChannelToken = token;
             this.globalData.activeChannelCode = code;
+            // 🔑 持久化到 localStorage（LRU 恢复用）
+            try {
+              wx.setStorageSync('active-channel-code', code);
+              wx.setStorageSync('active-channel-token', token);
+              console.log(`[getChannelToken] 持久化 channel: ${code}`);
+            } catch (e) {
+              console.warn('[getChannelToken] 持久化失败:', e);
+            }
           } catch (e) {
             console.error("获取渠道失败");
           }
@@ -466,6 +501,14 @@ App({
           resolve();
         },
         fail: () => {
+          console.warn('[getChannelToken] API 调用失败，使用 lastChannelToken 兜底');
+          // 🔑 兜底：用 lastChannelToken 顶替（如果 localStorage 里有）
+          const lastToken = wx.getStorageSync('last-auth-channel-token');
+          if (lastToken) {
+            this.globalData.activeChannelToken = lastToken;
+            this.globalData.activeChannelCode = code;
+            console.log(`[getChannelToken] fail fallback: 用 last-auth-channel-token 顶替，code=${code}`);
+          }
           resolve();
         },
       });

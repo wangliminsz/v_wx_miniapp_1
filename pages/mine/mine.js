@@ -82,6 +82,23 @@ Page({
 
   async onShow() {
     console.log('1 Mine onShow --->')
+
+    // 🔑 二次兜底读取：channelCode
+    // 场景：onLoad 跑在 app.onLaunch 之前 → app.globalData.activeChannelCode 还是 undefined
+    //       导致 mine.data.channelCode = undefined，WXML 的 wx:if 不显示 channel 行
+    // 兜底：onShow 时再读一次，如果跟当前 data 不一样就 setData 补上
+    //
+    // 优先级：activeChannelCode > currentChannel
+    //   - activeChannelCode 是已经成功获取 token 的（与后端建立过握手的最权威值）
+    //   - currentChannel 是 app 内存里"声明"的渠道（可能还没拿到 token，仅供参考）
+    const latestChannelCode = app.globalData.activeChannelCode
+      || app.globalData.currentChannel
+      || '';
+    if (latestChannelCode && latestChannelCode !== this.data.channelCode) {
+      console.log(`[mine] onShow 兜底: channelCode ${this.data.channelCode || '(空)'} → ${latestChannelCode}`);
+      this.setData({ channelCode: latestChannelCode });
+    }
+
     if (app.globalData.isLogin) {
       console.log('2 Mine onShow --->')
     }
@@ -289,7 +306,8 @@ Page({
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
     
     if (current !== "blank_channel") {
-      return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+      // return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+      return
     }
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -333,7 +351,8 @@ Page({
       return wx.showToast({ title: '渠道未变化', icon: 'none' });
     }
     if (newCode === "__default_channel__") {
-      return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+      // return wx.showToast({ title: '感谢您的使用', icon: 'none' });
+      return
     }
 
     // 执行切换

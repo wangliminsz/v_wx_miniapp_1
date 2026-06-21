@@ -19,13 +19,32 @@ Page({
     isSubmitting: false
   },
 
-  onLoad() {
+  async onLoad() {
+    // 🔑 P0 Bug Fix：必须 await app 的两个 promise，否则会在冷启动时（特别是
+    //  从"最近使用"打开时）app.onLaunch 还没跑完就发起 GraphQL 请求
+    //  - initPromise: 云环境初始化（决定 wx.cloud.* 是否可用）
+    //  - loginPromise: 鉴权流程（决定 isLogin + activeChannelToken 是否就绪）
+    // 缺这个 await，渠道切换后用老 token 请求会导致 401/拿到旧渠道数据
+    await app.initPromise;
+    if (app.loginPromise) {
+      try { await app.loginPromise; } catch (e) { console.warn('checkout-shipping: loginPromise rejected', e); }
+    }
     this.loadOrderData();
   },
 
   onShow() {
-    this.loadActiveOrder();
-    this.loadAddresses();
+    // 🔑 P0 Bug Fix：onShow 也要等，避免渠道切换后回到本页时拿到旧数据
+    // 用 try/catch 包住，因为 onShow 不允许 throw 出去中断后续逻辑
+    Promise.resolve().then(async () => {
+      if (app.initPromise) {
+        try { await app.initPromise; } catch (e) {}
+      }
+      if (app.loginPromise) {
+        try { await app.loginPromise; } catch (e) {}
+      }
+      this.loadActiveOrder();
+      this.loadAddresses();
+    });
   },
 
   async loadOrderData() {

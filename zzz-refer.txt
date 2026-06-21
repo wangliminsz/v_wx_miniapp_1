@@ -1,0 +1,158 @@
+方案可行，完美解决你Storage定时清空的痛点(by wx LRU)，先讲逻辑、再给完整流程、优缺点、标准代码
+ 
+一、整体思路（和你设想一致）
+ 
+1. 用户带启动参数打开小程序
+拿到scene、query、渠道参数，双写：本地Storage + 云开发数据库（按openid隔离）
+2. 隔很久重开，本地Storage被微信清空
+前端先读本地，无数据立刻调用云函数，用云函数自动携带的可信openid去数据库拉取历史启动参数
+3. 拉取回来重新写入Storage，恢复业务状态
+4. 头像这类静态图片本来放云存储，和这套存储逻辑完全兼容，互不冲突
+ 
+核心优势（直击你现在的问题）
+ 
+1. 云端数据不受微信本地LRU清理影响，不管隔几天、换设备登录，参数都在
+2. openid由云上下文自动获取，不用前端传参、防篡改，安全
+3. 不用自建后端，云开发一套搞定存储+云函数，成本低有免费额度
+ 
+二、整体执行流程
+ 
+1. app.js 初始化云环境
+ 
+js
+  
+App({
+  onLaunch(options) {
+    // 初始化云开发
+    wx.cloud.init({ env: "你的云环境ID" });
+    this.globalData.launchOpt = options;
+    // 先读本地缓存
+    let localParam = wx.getStorageSync("launchParam");
+    if (localParam) {
+      // 本地存在，直接用，同时刷新云端记录
+      this.saveLaunchToCloud(localParam);
+    } else {
+      // 本地丢了，去云端拉取兜底
+      this.getLaunchFromCloud().then(cloudParam => {
+        if (cloudParam) {
+          wx.setStorageSync("launchParam", cloudParam);
+          this.globalData.launchOpt = cloudParam;
+        }
+      })
+    }
+    // 本次是全新带参进入，覆盖本地+云端
+    if (options.scene && Object.keys(options.query || {}).length) {
+      wx.setStorageSync("launchParam", options);
+      this.saveLaunchToCloud(options);
+    }
+  },
+  // 写入云端
+  saveLaunchToCloud(opt) {
+    return wx.cloud.callFunction({
+      name: "saveLaunchParam",
+      data: { opt }
+    })
+  },
+  // 读取云端
+  getLaunchFromCloud() {
+    return new Promise(resolve => {
+      wx.cloud.callFunction({
+        name: "getLaunchParam",
+        success: res => resolve(res.result.data),
+        fail: () => resolve(null)
+      })
+    })
+  }
+})
+ 
+ 
+2. 云函数1：saveLaunchParam（保存启动参数到云数据库）
+ 
+js
+  
+const cloud = require('wx-server-sdk');
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+exports.main = async (event, context) => {
+  const { OPENID } = cloud.getWXContext();
+  const { opt } = event;
+  // upsert：存在则更新，不存在新增，一条记录对应一个用户
+  return await db.collection("user_launch")
+    .where({ _openid: OPENID })
+    .update({
+      data: {
+        opt,
+        updateTime: new Date()
+      }
+    })
+    .then(async res => {
+      if (res.stats.updated === 0) {
+        return await db.collection("user_launch").add({
+          data: { _openid: OPENID, opt, updateTime: new Date() }
+        })
+      }
+      return res;
+    })
+}
+ 
+ 
+3. 云函数2：getLaunchParam（读取用户历史启动参数）
+ 
+js
+  
+const cloud = require('wx-server-sdk');
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+exports.main = async () => {
+  const { OPENID } = cloud.getWXContext();
+  const res = await db.collection("user_launch")
+    .where({ _openid: OPENID })
+    .limit(1)
+    .get();
+  return { data: res.data[0]?.opt || null }
+}
+ 
+ 
+4. 数据库权限配置（关键，防止越权读取）
+ 
+集合  user_launch  权限规则：
+ 
+json
+  
+{
+  "read": "auth.openid == resource.data._openid",
+  "write": "auth.openid == resource.data._openid"
+}
+ 
+ 
+每个用户只能读写自己的记录，数据隔离安全。
+ 
+三、这套方案优缺点
+ 
+优点
+ 
+1. 彻底根治Storage长期闲置丢失，云端永久保存，不受微信本地清理机制限制
+2. 换手机登录同一个微信，也能读取之前的启动参数
+3. openid由云底层注入，无法伪造，比前端传openid更安全
+4. 和你现有的云存储头像逻辑打通，整套云开发统一管理
+5. 免费额度足够中小流量小程序使用，超量按量计费便宜
+ 
+短板（必须做兼容兜底）
+ 
+1. 依赖网络：用户断网时，云端读取失败，只能依赖本地Storage；
+解决：本地Storage优先，云端仅做兜底，断网不影响基础使用
+2. 每次冷启动多一次云函数请求，轻微增加启动耗时；
+解决：本地缓存优先，只有本地空了才调云函数，绝大多数场景无额外请求
+3. 云开发有单日读写调用上限，超大流量需扩容
+ 
+四、最优落地组合方案（推荐）
+ 
+1. 第一层：本地Storage（优先读取，速度最快）
+2. 第二层：云数据库兜底（本地清空、换设备、重装微信时恢复）
+3. 每次有效新启动参数，同时写入两层存储；仅本地为空时才请求云端
+ 
+五、补充优化点
+ 
+1. 增加超时/失败重试：读取云函数失败时给兜底默认参数，避免页面卡死
+2. 定时清理无用历史参数：不需要长期留存的渠道参数可加过期时间过滤
+3. 埋点上报：云端读取兜底成功时上报日志，统计用户Storage丢失比例，验证修复效果

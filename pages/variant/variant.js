@@ -52,6 +52,12 @@ Page({
     minOrderAmountForSetupFee: 0,
     setupFeeAmount: 0,
     setupFeeAmountYuan: '0.00',  // 格式化后的元字符串，方便 WXML 直接展示
+
+    // 🔑 来自 ProductVariant.customFields.perpetualInventory
+    // true  → 该单品是常备现货，永远不收开机费（即便购买数量低于渠道阈值）
+    // false → 受渠道级规则约束（数量低于 minOrderAmountForSetupFee 时收开机费）
+    perpetualInventory: false,
+
     // 🔑 渠道级开机费提示文本（仅在两字段都 > 0 时计算）
     // 形如: "如采购数量低于 100，将收取开机费 ¥ 300.00"
     setupFeeHintText: '',
@@ -81,6 +87,13 @@ Page({
   },
 
   async initPage() {
+    // 🔑 P2 Bug Fix：显式 await app.initPromise
+    // 虽然 loginPromise 在 app.onLaunch 里已经隐式依赖 initPromise，
+    // 但显式等 initPromise 更稳健，避免以后重构 app 时出 race condition
+    // （initPromise 完成意味着 wx.cloud.* 已经可用）
+    if (app.initPromise) {
+      try { await app.initPromise; } catch (e) { console.warn('variant: initPromise rejected', e); }
+    }
     await app.loginPromise;
     this.setData({ isLogin: app.globalData.isLogin });
     this.updateCartCount();
@@ -118,30 +131,50 @@ Page({
       const feeAmountCents = (channel && channel.customFields && channel.customFields.setupFeeAmount) || 0;
       console.log(`[VARIANT] channel=${channel && channel.code} minOrderAmountForSetupFee=${minAmount} setupFeeAmount=${feeAmountCents}cents`);
 
-      // 仅当两个字段都 > 0 时计算提示文本
-      let hintText = '';
-      if (minAmount > 0 && feeAmountCents > 0) {
-        const feeYuan = (feeAmountCents / 100).toFixed(2);
-        hintText = `数量 < ${minAmount}, 开机费 ¥ ${feeYuan}`;
-        this.setData({
-          minOrderAmountForSetupFee: minAmount,
-          setupFeeAmount: feeAmountCents,
-          setupFeeAmountYuan: feeYuan,
-          setupFeeHintText: hintText,
-        });
-      } else {
-        // 任一字段为 0 → 不启用，清空提示
-        this.setData({
-          minOrderAmountForSetupFee: 0,
-          setupFeeAmount: 0,
-          setupFeeAmountYuan: '0.00',
-          setupFeeHintText: '',
-        });
-      }
+      // 重新计算 hint：考虑当前 variant 的 perpetualInventory
+      //   - perpetualInventory=true → 该单品是常备现货，不显示提示
+      //   - perpetualInventory=false → 按渠道级规则显示
+      const hint = this.computeSetupFeeHintText({
+        minOrderAmountForSetupFee: minAmount,
+        setupFeeAmount: feeAmountCents,
+        perpetualInventory: this.data.perpetualInventory,
+      });
+
+      this.setData({
+        minOrderAmountForSetupFee: minAmount,
+        setupFeeAmount: feeAmountCents,
+        setupFeeAmountYuan: minAmount > 0 && feeAmountCents > 0
+          ? (feeAmountCents / 100).toFixed(2)
+          : '0.00',
+        setupFeeHintText: hint,
+      });
     } catch (err) {
       // GraphQL 失败（很可能是 activeChannel 上没加 custom fields）→ 静默失败，不显示提示
       console.warn('[VARIANT] fetchChannelSetupFees failed (probably customFields not defined on Channel):', err);
     }
+  },
+
+  // 🔑 计算 setup fee 提示文本（统一逻辑，两处调用）
+  // 输入：渠道级配置（minOrderAmountForSetupFee + setupFeeAmount）+ variant 级开关 perpetualInventory
+  // 输出：WXML 直接展示的提示文本（空字符串 = 不显示）
+  //
+  // 规则：
+  //   1. variant.perpetualInventory === true  → 永远不显示（"常备现货免开机费"）
+  //   2. 渠道级任一字段为 0/null              → 不显示（渠道未启用开机费）
+  //   3. 上述都满足                           → 显示"数量 < 阈值, 开机费 ¥ 金额"
+  computeSetupFeeHintText({ minOrderAmountForSetupFee, setupFeeAmount, perpetualInventory }) {
+    // 常备现货直接短路，不显示提示
+    if (perpetualInventory === true) {
+      console.log('[VARIANT] perpetualInventory=true → 不显示开机费提示');
+      return 'Perpetual, 无开机费'   //'Perpetual';
+    }
+    // 渠道未启用（任一字段为 0）→ 不显示
+    if (!minOrderAmountForSetupFee || !setupFeeAmount) {
+      return '';
+    }
+    // 显示标准渠道级提示
+    const feeYuan = (setupFeeAmount / 100).toFixed(2);
+    return `数量 < ${minOrderAmountForSetupFee}, 开机费 ¥ ${feeYuan}`;
   },
 
   async fetchVariant() {
@@ -190,6 +223,7 @@ Page({
                 volumePrices
                 volumePricesPerChannel
                 priceByLayer
+                perpetualInventory
               }
               featuredAsset {
                 id
@@ -249,6 +283,7 @@ Page({
                   volumePrices
                   volumePricesPerChannel
                   priceByLayer
+                  perpetualInventory
                 }
                 featuredAsset {
                   id
@@ -383,6 +418,12 @@ Page({
     // isGroupPrice 是 ProductVariant 顶层字段（后端直接加的 entity field，不是 custom field）
     const isGroupPrice = !!variant.isGroupPrice;
 
+    // 🔑 perpetualInventory 是 ProductVariant.customFields 字段
+    // true → 常备现货，永远不收开机费
+    // 后端 schema: ProductVariant: [{ name: 'perpetualInventory', type: 'boolean', public: true, defaultValue: false }]
+    const perpetualInventory = !!(variant.customFields && variant.customFields.perpetualInventory);
+    console.log(`[VARIANT] variant.sku=${variant.sku} perpetualInventory=${perpetualInventory}`);
+
     // 🔑 解析最终生效的 tier 规则：
     //   1. isGroupPrice=true      → 一口价，走 basePriceWithTax
     //   2. volumePricesPerChannel → 渠道专属（可能关闭阶梯价，也可能覆盖）
@@ -410,6 +451,14 @@ Page({
       tierDisplayList = this.buildTierDisplayList(tierList, basePriceWithTax);
     }
 
+    // 🔑 重新计算 setup fee 提示：考虑当前 variant 的 perpetualInventory
+    // 渠道级字段（minOrderAmountForSetupFee + setupFeeAmount）已经在 fetchChannelSetupFees 中存到 this.data
+    const setupFeeHintText = this.computeSetupFeeHintText({
+      minOrderAmountForSetupFee: this.data.minOrderAmountForSetupFee,
+      setupFeeAmount: this.data.setupFeeAmount,
+      perpetualInventory: perpetualInventory,
+    });
+
     this.setData({
       variant: variantData,
       product: product,
@@ -426,6 +475,9 @@ Page({
       tierList: tierList,
       tierDisplayList: tierDisplayList,
       displayPriceWithTax: displayPriceWithTax,
+      // 🔑 同步 variant 级别的 perpetualInventory 状态
+      perpetualInventory: perpetualInventory,
+      setupFeeHintText: setupFeeHintText,
     });
 
     wx.setNavigationBarTitle({

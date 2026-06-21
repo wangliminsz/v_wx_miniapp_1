@@ -62,6 +62,15 @@
 
 
 
+    <!-- 客户留言 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">客户留言</text>
+      </view>
+      <textarea class="message-input" placeholder="请输入您的留言（选填）" bindinput="onMessageInput" value="{{customerMessage}}" maxlength="200"></textarea>
+    </view>
+
+
     <!-- 确认订单 -->
     <view class="flex flow-row justify-center">
 
@@ -86,7 +95,7 @@
 
 
     <!-- 账单地址选择区域 -->
-    <view class="section">
+    <!-- <view class="section">
       <view class="section-header">
         <text class="section-title">账单地址</text>
 
@@ -104,7 +113,6 @@
         </view>
       </view>
 
-      <!-- 地址卡片 -->
       <view class="address-card" wx:if="{{hasInvoiceAddress && invoiceAddress}}">
         <view class="address-info">
           <view class="address-header">
@@ -116,7 +124,6 @@
         </view>
       </view>
 
-      <!-- 无地址提示 -->
       <view class="no-address-tip" wx:else>
         <view class="tip-icon-wrap">
           <text class="tip-icon-text">📍</text>
@@ -125,7 +132,7 @@
         <text class="tip-desc">添加地址后可完成订单确认</text>
         <view class="tip-btn" bindtap="goToAddAddress" hover-class="tip-btn-active">添加账单地址</view>
       </view>
-    </view>
+    </view> -->
 
 
     <!-- 支付信息 -->
@@ -168,13 +175,6 @@
       </view>
     </view> -->
 
-    <!-- 客户留言 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">客户留言</text>
-      </view>
-      <textarea class="message-input" placeholder="请输入您的留言（选填）" bindinput="onMessageInput" value="{{customerMessage}}" maxlength="200"></textarea>
-    </view>
 
     <!-- 发票信息 -->
     <view class="section" wx:if="{{invoiceInfo}}">
@@ -196,7 +196,7 @@
         <!-- <text class="service-contact">客服微信：XXX</text> -->
       </view>
     </view>
-    
+
 
   </view>
 

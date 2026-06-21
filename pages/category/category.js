@@ -49,22 +49,31 @@ Page({
   },
 
   onShow() {
-    // await app.initPromise;
-    // await app.loginPromise;
-    this.setData({
-      isLogin: app.globalData.isLogin
-    });
-    app.updateCartBadge();
-    if (app.globalData.isLogin) {
-      app.syncServerCartCount();
-    }
+    // 🔑 P1 Bug Fix：原来 await 被注释掉了，导致渠道切换后回到本页时：
+    //   - 读到的是老 loginPromise 的 isLogin 状态
+    //   - 然后用错的状态调 syncServerCartCount() 等
+    // 现在用 Promise.resolve().then 包住，让 onShow 不阻塞渲染
+    Promise.resolve().then(async () => {
+      if (app.initPromise) {
+        try { await app.initPromise; } catch (e) {}
+      }
+      if (app.loginPromise) {
+        try { await app.loginPromise; } catch (e) {}
+      }
+      this.setData({
+        isLogin: app.globalData.isLogin
+      });
+      app.updateCartBadge();
+      if (app.globalData.isLogin) {
+        app.syncServerCartCount();
+      }
 
-    // 处理从 home 页面通过 switchTab 跳过来并希望定位到指定分类
-    // 兼容两种来源：1) globalData.pendingCategorySlug（首次跳转） 2) page.data.pendingSlug（同 tab 内跳转）
-    const pending = app.globalData.pendingCategorySlug || this.data.pendingSlug;
-    if (pending) {
-      app.globalData.pendingCategorySlug = null;
-      this.setData({ pendingSlug: null });
+      // 处理从 home 页面通过 switchTab 跳过来并希望定位到指定分类
+      // 兼容两种来源：1) globalData.pendingCategorySlug（首次跳转） 2) page.data.pendingSlug（同 tab 内跳转）
+      const pending = app.globalData.pendingCategorySlug || this.data.pendingSlug;
+      if (pending) {
+        app.globalData.pendingCategorySlug = null;
+        this.setData({ pendingSlug: null });
       // 等分类加载完成后再切换（如果是首次进入）
       if (this.data.categories && this.data.categories.length > 0) {
         this.loadProductsBySlug(pending);
@@ -73,6 +82,7 @@ Page({
         this._pendingCategoryAfterLoad = pending;
       }
     }
+    });
   },
 
   _consumePendingSlug() {

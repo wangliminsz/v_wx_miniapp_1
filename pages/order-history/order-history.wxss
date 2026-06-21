@@ -247,6 +247,35 @@
   flex: 1;
 }
 
+/* 🔑 用户留言（订单级 customFields.customerMessage）— 与"发货状态"同样的样式骨架
+   位置：发货状态下方
+   视觉：浅灰标签 + 深色文字，支持长文自动换行
+   user-select: 让用户可以长按选择复制留言内容 */
+.customer-message {
+  display: flex;
+  align-items: flex-start;   /* 顶部对齐，让长留言可以多行 */
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 1.5;
+  padding-top: 16rpx;
+  padding-bottom: 16rpx;
+  background: #F7F8FA;       /* 浅灰底，与上方发货状态区隔 */
+  border-radius: 6rpx;
+}
+
+.customer-message-label {
+  color: #86909C;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.customer-message-text {
+  color: #1D2129;
+  flex: 1;
+  word-break: break-all;     /* 长字符串/URL 自动换行 */
+  white-space: pre-wrap;     /* 保留用户输入的换行 */
+}
+
 .fulfillment-details {
   margin-top: 16rpx;
   background-color: #F7F8FA;

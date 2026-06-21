@@ -81,6 +81,14 @@
             <text class="fulfillment-text">{{item.fulfillmentSummary.statusText}}</text>
           </view>
 
+          <!-- 🔑 用户留言 — 显示在"发货状态"下方，订单级 customFields.customerMessage
+               - 来源：Order.customFields.customerMessage（后端 schema: text 类型，可空）
+               - 仅当非空时显示（兼容老订单没有该字段的情况） -->
+          <view class="customer-message" wx:if="{{item.customerMessage && item.customerMessage !== ''}}">
+            <text class="customer-message-label">用户留言:</text>
+            <text class="customer-message-text" user-select="true">{{item.customerMessage}}</text>
+          </view>
+
           <!-- 发货详情 (每个 fulfillment 一组) -->
           <view class="fulfillment-details" wx:if="{{item.fulfillmentSummary.details.length > 0}}">
             <view wx:for="{{item.fulfillmentSummary.details}}" wx:for-item="fl" wx:for-index="flIndex" wx:key="fulfillmentIndex" class="fulfillment-group">

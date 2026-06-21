@@ -10,11 +10,20 @@ Page({
     historyEntries: [],
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     this.setData({
       orderId: options.orderId || '',
       orderCode: options.orderCode || '',
     });
+    // 🔑 P1 Bug Fix：必须 await app 的两个 promise
+    //  - initPromise: 云环境初始化
+    //  - loginPromise: 鉴权流程（决定 activeChannelToken 是否就绪）
+    // 虽然 order(id: $id) 不需要登录，但 graphqlClient 需要 channel token
+    // 渠道切换后没等的话会用老 token 查老渠道的数据
+    await app.initPromise;
+    if (app.loginPromise) {
+      try { await app.loginPromise; } catch (e) { console.warn('order-history-detail: loginPromise rejected', e); }
+    }
     this.loadOrderDetail();
   },
 
