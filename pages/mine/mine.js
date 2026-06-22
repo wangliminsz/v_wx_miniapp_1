@@ -83,6 +83,15 @@ Page({
   async onShow() {
     console.log('1 Mine onShow --->')
 
+    // 🔑 关键修复：先 await app.initPromise，让 onLaunch 跑完 line 141 设置 currentChannel
+    // 之前兜底逻辑在 await 之前，可能拿到 currentChannel = '' → 兜底失败
+    if (app.initPromise) {
+      try { await app.initPromise; } catch (e) {}
+    }
+    if (app.cloudInitPromise) {
+      try { await app.cloudInitPromise; } catch (e) {}
+    }
+
     // 🔑 二次兜底读取：channelCode
     // 场景：onLoad 跑在 app.onLaunch 之前 → app.globalData.activeChannelCode 还是 undefined
     //       导致 mine.data.channelCode = undefined，WXML 的 wx:if 不显示 channel 行
@@ -565,6 +574,23 @@ Page({
               wx.removeStorageSync('vendure-auth-token');
               wx.removeStorageSync('last-auth-channel-token');
               wx.removeStorageSync('last-auth-channel-code');
+              // 🔑 解除绑定时（针对当前渠道），同步清除渠道相关的 localStorage + globalData
+              //   - active-channel-code/token：是上次成功调用 getChannelToken 时持久化的
+              //     解除绑定后这些值对当前用户已无意义（unbindWechatAccount 是 per-channel 的）
+              //     清掉后下次启动会强制走 getChannelToken 重新获取最新 token
+              //   - globalData.lastChannelToken 是 initAuthFlow 的重要比对源
+              //     不清会导致下次鉴权认为"渠道没变"，跳过 token 刷新
+              //   - app_persisted_channel：清掉后下次冷启动会回退到 blank_channel
+              //     用户需要重新扫码或输入 channel code 才能继续访问该渠道
+              //   - globalData.currentChannel：清掉后 mine 的 onShow 兜底也拿不到，
+              //     配合 channelCode 同步重置为 blank_channel 显示
+              wx.removeStorageSync('active-channel-code');
+              wx.removeStorageSync('active-channel-token');
+              wx.removeStorageSync('app_persisted_channel');
+              app.globalData.activeChannelCode = '';
+              app.globalData.activeChannelToken = '';
+              app.globalData.lastChannelToken = '';
+              app.globalData.currentChannel = '';
               
               // 立即更新当前页面数据
               this.setData({
@@ -574,7 +600,11 @@ Page({
                 userName: '',
                 userMobile: '',
                 companyInfo: '',
-                userInfoExist: false
+                userInfoExist: false,
+                // 🔑 渠道重置：配合上面的 currentChannel/activeChannelCode 清理，
+                //   立即把页面显示的 channel code 也改回 blank_channel
+                //   不需要等 mine.onShow 重新跑（虽然它也会跑兜底逻辑）
+                channelCode: 'blank_channel',
               });
 
               wx.hideLoading();

@@ -155,6 +155,17 @@ Page({
                     id
                     preview
                   }
+                  # 🔑 Fulfillment.customFields.fulfillPdfs: 运单/送货单 PDF 附件
+                  #  - relation → Asset, list: false: 每个 fulfillment 最多 1 个 PDF
+                  #  - 一般是送货通知/对账单/COA
+                  #  - 与 line 级别的 orderLinePdfs 共享 onAttachmentTap handler
+                  fulfillPdfs {
+                    id
+                    name
+                    preview
+                    source
+                    mimeType
+                  }
                 }
                 lines {
                   quantity
@@ -163,6 +174,10 @@ Page({
                     productVariant {
                       name
                       sku
+                    }
+                    # 🔑 取 OrderLine.customFields.samplePlate 以便在 fulfillment 徽章上累加
+                    customFields {
+                      samplePlate
                     }
                   }
                 }
@@ -174,6 +189,19 @@ Page({
                 productVariant {
                   name
                   sku
+                }
+                # 🔑 单行 custom fields：随货样板 + 附件
+                #  - samplePlate: int 类型，后端默认 0
+                #  - orderLinePdfs: relation → Asset, list: false, 每个 line 至多 1 个附件
+                customFields {
+                  samplePlate
+                  orderLinePdfs {
+                    id
+                    name
+                    preview
+                    source
+                    mimeType
+                  }
                 }
               }
             }
@@ -220,6 +248,17 @@ Page({
                     id
                     preview
                   }
+                  # 🔑 Fulfillment.customFields.fulfillPdfs: 运单/送货单 PDF 附件
+                  #  - relation → Asset, list: false: 每个 fulfillment 最多 1 个 PDF
+                  #  - 一般是送货通知/对账单/COA
+                  #  - 与 line 级别的 orderLinePdfs 共享 onAttachmentTap handler
+                  fulfillPdfs {
+                    id
+                    name
+                    preview
+                    source
+                    mimeType
+                  }
                 }
                 lines {
                   quantity
@@ -228,6 +267,10 @@ Page({
                     productVariant {
                       name
                       sku
+                    }
+                    # 🔑 取 OrderLine.customFields.samplePlate 以便在 fulfillment 徽章上累加
+                    customFields {
+                      samplePlate
                     }
                   }
                 }
@@ -239,6 +282,19 @@ Page({
                 productVariant {
                   name
                   sku
+                }
+                # 🔑 单行 custom fields：随货样板 + 附件
+                #  - samplePlate: int 类型，后端默认 0
+                #  - orderLinePdfs: relation → Asset, list: false, 每个 line 至多 1 个附件
+                customFields {
+                  samplePlate
+                  orderLinePdfs {
+                    id
+                    name
+                    preview
+                    source
+                    mimeType
+                  }
                 }
               }
             }
@@ -312,12 +368,40 @@ Page({
         : '',
       formattedLines: (order.lines || []).map(line => {
         const setupFeeSurcharge = surchargeBySku.get(line.productVariant.sku);
+        // 🔑 单行 custom fields 提取
+        //  - samplePlate: 数字类型，0 表示"无随货样板"
+        //  - orderLinePdfs: 防御性读取 + 推断文件类型（用于显示图标和决定点击行为）
+        //    类型有 4 种：image / pdf / doc / other
+        const cf = (line && line.customFields) || {};
+        const samplePlate = Number(cf.samplePlate) || 0;
+        const orderLinePdfs = (cf.orderLinePdfs && cf.orderLinePdfs.id) ? {
+          id: cf.orderLinePdfs.id,
+          name: cf.orderLinePdfs.name || '附件',
+          // preview 通常是缩略图（图片可显示，PDF 是 icon），source 是原始下载链接
+          preview: cf.orderLinePdfs.preview || cf.orderLinePdfs.source,
+          source: cf.orderLinePdfs.source || cf.orderLinePdfs.preview,
+          mimeType: cf.orderLinePdfs.mimeType || '',
+        } : null;
+        const orderLinePdfsFileType = this._getFileType(orderLinePdfs && orderLinePdfs.name, orderLinePdfs && orderLinePdfs.mimeType);
         return {
           ...line,
           formattedUnitPrice: this.formatPrice(line.unitPriceWithTax, currencyCode),
           // 🔑 该行触发的附加费（开机费）— 与 cart/checkout 页面同款，display in line 下方
           setupFee: setupFeeSurcharge ? this.formatPrice(setupFeeSurcharge.priceWithTax, currencyCode) : null,
           setupFeePrice: setupFeeSurcharge ? setupFeeSurcharge.priceWithTax : 0,
+          // 🔑 随货样板（仅 > 0 时显示）
+          samplePlate: samplePlate,
+          // 🔑 单行 PDF 附件（仅非空时显示）
+          orderLinePdfs: orderLinePdfs,
+          orderLinePdfsFileType: orderLinePdfsFileType,
+          // 🔑 使用 SVG 路径（与 variant 详情页"技术文档"同款）
+          //    与 emoji 相比视觉更精致，资源复用以减小 bundle
+          orderLinePdfsIconPath: this._getFileIconPath(
+            (orderLinePdfs && (orderLinePdfs.name || orderLinePdfs.preview)) || ''
+          ),
+          // 🔑 序列化整个附件对象 → 传给 WXML 的 data-line-pdf-json
+          //    原因：dataset 只支持 string/number，把对象传过去需要在 dataset 中序列化
+          orderLinePdfsJson: orderLinePdfs ? JSON.stringify(orderLinePdfs) : '',
         };
       }),
       fulfillmentSummary: this.getFulfillmentSummary(order.fulfillments || []),
@@ -411,7 +495,33 @@ Page({
           quantity: line.quantity,
         };
       });
+      // 🔑 累加该 fulfillment 下的所有 OrderLine.customFields.samplePlate
+      //   与 reference (zzz-refer-1.txt) 同款：徽章显示"该次发货一共多少块样板"
+      //   防御读取：f.lines[].orderLine?.customFields?.samplePlate 任意一层缺失都视为 0
+      const samplePlateSum = (f.lines || []).reduce((sum, fl) => {
+        const v = fl?.orderLine?.customFields?.samplePlate;
+        return sum + (Number(v) || 0);
+      }, 0);
       const fulfillDocsPreview = (f.customFields && f.customFields.fulfillDocs && f.customFields.fulfillDocs.preview) || '';
+      // 🔑 防御性读取 fulfillPdfs（运单/送货单 PDF 附件）
+      //  - 防御性：customFields 为空、fulfillPdfs 为 null、缺字段 都视为"无附件"
+      //  - 与 line 级别 orderLinePdfs 完全相同的对象结构（{id, name, preview, source, mimeType}）
+      //  - 共享 onAttachmentTap handler（统一处理 image/PDF/doc 点击行为）
+      const fulfillPdfsRaw = (f.customFields && f.customFields.fulfillPdfs && f.customFields.fulfillPdfs.id)
+        ? f.customFields.fulfillPdfs
+        : null;
+      const fulfillPdfs = fulfillPdfsRaw ? {
+        id: fulfillPdfsRaw.id,
+        name: fulfillPdfsRaw.name || '附件',
+        preview: fulfillPdfsRaw.preview || fulfillPdfsRaw.source,
+        source: fulfillPdfsRaw.source || fulfillPdfsRaw.preview,
+        mimeType: fulfillPdfsRaw.mimeType || '',
+      } : null;
+      const fulfillPdfsFileType = this._getFileType(fulfillPdfs && fulfillPdfs.name, fulfillPdfs && fulfillPdfs.mimeType);
+      const fulfillPdfsIconPath = this._getFileIconPath(
+        (fulfillPdfs && (fulfillPdfs.name || fulfillPdfs.preview)) || ''
+      );
+      const fulfillPdfsJson = fulfillPdfs ? JSON.stringify(fulfillPdfs) : '';
       const fulfillmentDate = f.createdAt ? this.formatDate(f.createdAt) : '';
       details.push({
         fulfillmentIndex: validFIdx,
@@ -420,8 +530,15 @@ Page({
         method: f.method || '',
         trackingCode: f.trackingCode || '',
         fulfillDocsPreview,
+        // 🟦 Fulfillment 级 PDF 附件（与 line 级同款 → 共享 onAttachmentTap）
+        fulfillPdfs: fulfillPdfs,
+        fulfillPdfsFileType: fulfillPdfsFileType,
+        fulfillPdfsIconPath: fulfillPdfsIconPath,
+        fulfillPdfsJson: fulfillPdfsJson,
         fulfillmentDate,
         items,
+        // 🟠 随货样板块徽章：仅在 > 0 时 WXML 才会显示
+        samplePlateSum: samplePlateSum,
       });
     });
     return {
@@ -516,6 +633,139 @@ Page({
         current: preview,
       });
     }
+  },
+
+  // =============================================================
+  // 🔑 单行 PDF 附件（orderLinePdfs）相关 helpers
+  // =============================================================
+  // 1) _getFileType: 根据文件名和 mimeType 推断文件分类
+  //   返回值：'image' | 'pdf' | 'doc' | 'other'
+  //   用法：根据类型决定点击行为
+  //     - image → wx.previewImage 全屏预览
+  //     - pdf/doc/other → wx.downloadFile + wx.openDocument
+  _getFileType(name, mimeType) {
+    if (!name && !mimeType) return 'other';
+    const lowerName = (name || '').toLowerCase();
+    const lowerMime = (mimeType || '').toLowerCase();
+    if (lowerMime.startsWith('image/') || /\.(jpe?g|png|gif|bmp|webp|svg)$/i.test(lowerName)) return 'image';
+    if (lowerMime === 'application/pdf' || /\.pdf$/i.test(lowerName)) return 'pdf';
+    if (lowerMime.includes('word') || lowerMime.includes('officedocument') || /\.(docx?|rtf)$/i.test(lowerName)) return 'doc';
+    if (lowerMime.includes('sheet') || lowerMime.includes('excel') || /\.(xlsx?|csv)$/i.test(lowerName)) return 'doc';
+    if (/\.(jpe?g|png|gif|bmp|webp|svg|pdf|docx?|xlsx?)$/i.test(lowerName)) {
+      return lowerName.match(/\.(jpe?g|png|gif|bmp|webp|svg)$/i) ? 'image' : (lowerName.match(/\.pdf$/i) ? 'pdf' : 'doc');
+    }
+    return 'other';
+  },
+  // 2) _getFileIconPath: 根据文件名/URL 返回对应的 SVG icon 路径
+  //   - 与 pages/variant/variant.js 的 getIcon 保持完全一致
+  //   - 共用 /static/images/file_icons/ 目录下的 SVG（与 variant 详情页"技术文档"同款图标）
+  //   - 通过 url 后缀（不是 fileType）匹配 → 同一份资源能复用，减小 bundle
+  //   - 找不到明确后缀时 fallback 到 HTML.svg（与 variant 一致）
+  _getFileIconPath(url) {
+    if (!url || typeof url !== 'string') return '/static/images/file_icons/HTML.svg';
+    // 去掉可能的 query string，取后缀
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    const extension = (cleanUrl.split('.').pop() || '').toLowerCase();
+    switch (extension) {
+      case 'xlsx':
+      case 'xls':
+        return '/static/images/file_icons/EXCEL.svg';
+      case 'pdf':
+        return '/static/images/file_icons/PDF.svg';
+      case 'jpg':
+      case 'jpeg':
+        return '/static/images/file_icons/JPEG.svg';
+      case 'png':
+        return '/static/images/file_icons/PNG.svg';
+      case 'mp4':
+        return '/static/images/file_icons/MP4.svg';
+      case 'pptx':
+      case 'ppt':
+        return '/static/images/file_icons/PPTX.svg';
+      case 'txt':
+        return '/static/images/file_icons/TXT.svg';
+      case 'docx':
+      case 'doc':
+        return '/static/images/file_icons/WORD.svg';
+      case 'zip':
+        return '/static/images/file_icons/ZIP.svg';
+      default:
+        return '/static/images/file_icons/HTML.svg';
+    }
+  },
+  // 3) onAttachmentTap: 通用附件点击 handler（同时支持 line 级别和 fulfillment 级别）
+  //   - image → wx.previewImage 全屏预览（用户可以左右滑动查看大图）
+  //   - pdf/doc/other → 下载到本地临时路径 → wx.openDocument 调用系统查看器
+  //   - 关键：要在 data-* 里传完整对象（attachment），所以 WXML 用
+  //     data-attachment-json='{{...}}' 把对象序列化到 dataset
+  //   - WXML 调用方式（line 级别）：
+  //       <view bindtap="onAttachmentTap" data-attachment-json="{{line.orderLinePdfsJson}}">
+  //   - WXML 调用方式（fulfillment 级别）：
+  //       <view bindtap="onAttachmentTap" data-attachment-json="{{fl.fulfillPdfsJson}}">
+  onAttachmentTap(e) {
+    const fileJson = e.currentTarget.dataset.attachmentJson;
+    if (!fileJson) return;
+    let file;
+    try {
+      file = typeof fileJson === 'string' ? JSON.parse(fileJson) : fileJson;
+    } catch (err) {
+      console.error('[ORDER-HISTORY] onAttachmentTap: invalid attachmentJson', err);
+      return;
+    }
+    const url = file.source || file.preview;
+    if (!url) {
+      wx.showToast({ title: '附件链接无效', icon: 'none' });
+      return;
+    }
+    const fileType = this._getFileType(file.name, file.mimeType);
+    // 🖼️ 图片走 previewImage
+    if (fileType === 'image') {
+      wx.previewImage({
+        urls: [url],
+        current: url,
+      });
+      return;
+    }
+    // 📄/📝/📎 其他走 downloadFile + openDocument
+    //    openDocument 在 PC/真机上会调用系统 PDF 阅读器，在模拟器会提示下载
+    wx.showLoading({ title: '正在打开...', mask: true });
+    wx.downloadFile({
+      url: url,
+      success: (res) => {
+        wx.hideLoading();
+        if (res.statusCode !== 200) {
+          wx.showToast({ title: `下载失败 (${res.statusCode})`, icon: 'none' });
+          return;
+        }
+        const filePath = res.tempFilePath;
+        // openDocument 仅支持特定后缀，对未知类型也尝试一次（不报错即可）
+        wx.openDocument({
+          filePath: filePath,
+          showMenu: true,           // 长按可转发/收藏
+          success: () => {
+            console.log('[ORDER-HISTORY] openDocument ok:', file.name);
+          },
+          fail: (err) => {
+            console.warn('[ORDER-HISTORY] openDocument failed, fallback to copy link', err);
+            // 降级：复制链接到剪贴板
+            wx.setClipboardData({
+              data: url,
+              success: () => wx.showToast({ title: '已复制链接', icon: 'success' }),
+            });
+          },
+        });
+      },
+      fail: (err) => {
+        wx.hideLoading();
+        console.error('[ORDER-HISTORY] downloadFile failed:', err);
+        wx.showToast({ title: '下载失败', icon: 'none' });
+      },
+    });
+  },
+
+  // 兼容旧名 → 直接 delegate 到通用 handler（避免破坏现有 line 级别调用方）
+  onLinePdfTap(e) {
+    return this.onAttachmentTap(e);
   },
 
   onCopyTrackingCode(e) {

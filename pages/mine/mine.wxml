@@ -15,7 +15,7 @@
         <view>
           <image class="avatar" src="{{userAvatarUrl}}" mode="aspectFill"></image>
         </view>
-        <view style="height: 120rpx;"></view>
+        <view wx:if="{{userName}}" style="height: 120rpx;"></view>
       </view>
       <!-- 信息区域：昵称 + 姓名 + 手机号 分层展示 -->
       <view class="user-text">

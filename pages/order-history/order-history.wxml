@@ -71,6 +71,40 @@
 
             </view>
 
+            <!-- 🔑 单行额外信息 row 容器：把"随货样板"和"PDF 附件"放在同一行
+                 - 用 .line-extras-row 横向 flex 布局
+                 - flex-wrap: wrap 让小屏（长文件名）自动换行
+                 - gap: 12rpx 让两个块之间有呼吸
+                 - 至少一个存在时整行才渲染（避免空 row 浪费空间） -->
+            <view class="line-extras-row"
+                  wx:if="{{(line.samplePlate && line.samplePlate > 0) || (line.orderLinePdfs && line.orderLinePdfs.id)}}">
+              <!-- 🟠 随货样板（OrderLine.customFields.samplePlate，int 类型）
+                   - 风格：与开机费同一行视觉重量（都是"额外项"）
+                   - 颜色：琥珀色（#FF7D00 系列），与 Fulfill Order modal 的输入框一致
+                   - 仅在 > 0 时显示（0 = "无样板"，是默认值，不渲染）
+                   - 与 line-pdf-attachment 共用同一行（节省纵向空间） -->
+              <view class="line-sample-plate" wx:if="{{line.samplePlate && line.samplePlate > 0}}">
+                <text class="line-sample-plate-icon">🪧</text>
+                <text class="line-sample-plate-label">随货样板</text>
+                <text class="line-sample-plate-qty">× {{line.samplePlate}}</text>
+              </view>
+
+              <!-- 🔑 单行 PDF 附件（OrderLine.customFields.orderLinePdfs，relation → Asset）
+                   - 可点击：图片走 previewImage，PDF/doc 走 downloadFile + openDocument
+                   - 文件类型 icon：与 variant 详情页"技术文档"共用 /static/images/file_icons/*.svg
+                     通过文件名后缀匹配（PDF.svg, WORD.svg, EXCEL.svg ...）
+                   - 仅在非空时显示
+                   - hover-class 给出点击反馈（标准微信 tap 反馈色）
+                   - 使用通用 onAttachmentTap handler（与 fulfillment 级 PDF 共享） -->
+              <view class="line-pdf-attachment" wx:if="{{line.orderLinePdfs && line.orderLinePdfs.id}}" bindtap="onAttachmentTap" data-attachment-json="{{line.orderLinePdfsJson}}" hover-class="line-pdf-attachment-hover" hover-stay-time="100">
+                <image class="line-pdf-icon" src="{{line.orderLinePdfsIconPath}}" mode="aspectFit"></image>
+                <view class="line-pdf-meta">
+                  <!-- <text class="line-pdf-label">附件</text> -->
+                  <text class="line-pdf-name">{{line.orderLinePdfs.name}}</text>
+                </view>
+                <!-- <text class="line-pdf-arrow">›</text> -->
+              </view>
+            </view>
 
           </view>
           <!-- <view class="shipping-info">
@@ -92,12 +126,21 @@
           <!-- 发货详情 (每个 fulfillment 一组) -->
           <view class="fulfillment-details" wx:if="{{item.fulfillmentSummary.details.length > 0}}">
             <view wx:for="{{item.fulfillmentSummary.details}}" wx:for-item="fl" wx:for-index="flIndex" wx:key="fulfillmentIndex" class="fulfillment-group">
+              
               <view class="fulfillment-group-header">
 
                 <view class="flex flex-col">
 
-                  <view>
+                  <view class="fl-title-row">
                     <text class="fl-title">第 {{fl.fulfillmentIndex}} 次发货</text>
+                    <!-- 🟠 随货样板块徽章（与 reference zzz-refer-1.txt 同款）
+                         - 仅在 fl.samplePlateSum > 0 时显示
+                         - 紧贴 fl-title 右侧；若右边运单号过长会被换行（flex-wrap）
+                         - 用户一眼能看到"该次发货一共多少块样板" -->
+                    <view wx:if="{{fl.samplePlateSum && fl.samplePlateSum > 0}}" class="fl-sample-plate-badge" title="本批发货的随货样板块数">
+                      <text class="fl-sample-plate-icon">🪧</text>
+                      <text class="fl-sample-plate-text">{{fl.samplePlateSum}} 随货样板</text>
+                    </view>
                   </view>
 
                   <view>
@@ -122,16 +165,51 @@
 
                 </block>
               </view>
-              <image wx:if="{{fl.fulfillDocsPreview}}" class="fulfill-doc-image" src="{{fl.fulfillDocsPreview}}" mode="aspectFit" bindtap="previewFulfillDoc" data-preview="{{fl.fulfillDocsPreview}}"></image>
+
               <view wx:for="{{fl.items}}" wx:for-item="flItem" wx:for-index="flItemIndex" wx:key="flItemIndex" class="fulfillment-item">
                 <view class="fl-item-name-row">
                   <text class="fl-item-name">{{flItem.name}}</text>
                 </view>
                 <view class="fl-item-meta-row">
                   <text class="fl-item-meta">Qty: {{flItem.quantity}}</text>
-                  <text class="fl-item-meta">SKU: {{flItem.sku}}</text>
+                  <!-- <text class="fl-item-meta">SKU: {{flItem.sku}}</text> -->
                 </view>
               </view>
+
+              <view style="height: 20rpx;"></view>
+
+              <view class="flex gap-4">
+                <view>
+
+                  <image wx:if="{{fl.fulfillDocsPreview}}" class="fulfill-doc-image" src="{{fl.fulfillDocsPreview}}" mode="aspectFit" bindtap="previewFulfillDoc" data-preview="{{fl.fulfillDocsPreview}}"></image>
+
+                </view>
+
+                <!-- 🔑 Fulfillment 级 PDF 附件（Fulfillment.customFields.fulfillPdfs）
+                     - 位置：fulfillDocs 图片下方
+                     - 用途：一般是送货通知/对账单/COA 等正式文档
+                     - 点击行为：图片走 previewImage，PDF/doc 走 downloadFile+openDocument
+                     - 使用通用 onAttachmentTap handler，data-attachment-json 传完整对象
+                     - 仅在 fl.fulfillPdfs.id 非空时显示
+                     - 布局：参考 variant 详情页"技术文档"section 的 .file_icon-container
+                       · 纵向 flex: icon 在上、name 在下
+                       · 大 icon 96rpx（视觉更突出，用户一眼能看到附件）
+                       · 名字带 ellipsis 省略号（长文件名友好显示） -->
+                <view class="fulfill-pdf-card"
+                      wx:if="{{fl.fulfillPdfs && fl.fulfillPdfs.id}}"
+                      bindtap="onAttachmentTap"
+                      data-attachment-json="{{fl.fulfillPdfsJson}}"
+                      hover-class="fulfill-pdf-card-hover"
+                      hover-stay-time="100">
+                  <image class="fulfill-pdf-card-icon" src="{{fl.fulfillPdfsIconPath}}" mode="aspectFit"></image>
+                  <text class="fulfill-pdf-card-name">{{fl.fulfillPdfs.name}}</text>
+                </view>
+
+
+
+              </view>
+
+
             </view>
           </view>
         </view>
